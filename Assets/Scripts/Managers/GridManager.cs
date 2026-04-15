@@ -43,45 +43,40 @@ public class GridManager : MonoBehaviour
     private void Start() 
     {
         InitializeGrid();
-
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                ScanGrid(x, y);
-            }
-        }
         PaintGrid();
     }
 
     private void InitializeGrid()
     {
+        LevelDataSO levelToLoad = LevelManager.Instance.levels[0];
+        gridHeight = levelToLoad.height;
+        gridWidth = levelToLoad.width;
+        bufferSize = levelToLoad.bufferSize;
+
         GridNode node;
-        // y
-        for (int i = 0; i < gridHeight + bufferSize; i++)
+
+        // Initialize grid
+        for (int y = 0; y < gridHeight; y++)
         {
-            // x
-            for (int j = 0; j < gridWidth; j++)
+            for (int x = 0; x < gridWidth; x++)
             {
+                int flattenedNodeID = (x * gridWidth) + y;
                 int id = Random.Range(0, 5);
 
-                // Hardcoded unplayable grid nodes.
-                if (j == 5 && i == 3)
+                if (levelToLoad.gridLayout[flattenedNodeID].isPlayable)
                 {
-                    node = new GridNode(j, i, 999, false); 
-                }
-                else if (j == 2 && i == 7)
-                {
-                    node = new GridNode(j, i, 999, false); 
+                    node = new GridNode(x, y, id);  
                 }
                 else
                 {
-                    node = new GridNode(j, i, id);   
+                    node = new GridNode(x, y, id, false);   
                 }
 
-                gridData[j, i] = node;
+                gridData[x, y] = node;
             }
         }
+
+        // Initialize buffer
     }
 
     private void ScanGrid(int x, int y)

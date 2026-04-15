@@ -55,10 +55,14 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 Assets/Scripts/Grid/
  GridNode.cs
  PieceData.cs
-Assets/Scripts/Managers/
- GridManager.cs
- InputManager.cs
-Assets/Scripts/Utils.cs
+Assets/Scripts/
+ Level Generation/CellSetup.cs
+ Managers/
+  GridManager.cs
+  InputManager.cs
+  LevelManager.cs
+ ScriptableObjects/LevelDataSO.cs
+ Utils.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 
 [metadataReferences]
