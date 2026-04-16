@@ -52,17 +52,20 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 /warnaserror+:NU1605
 
 [sourceFiles]
-Assets/Scripts/Grid/
- GridNode.cs
- PieceData.cs
-Assets/Scripts/
- Level Generation/CellSetup.cs
- Managers/
-  GridManager.cs
-  InputManager.cs
-  LevelManager.cs
- ScriptableObjects/LevelDataSO.cs
- Utils.cs
+Assets/
+ InputSystem_Actions.cs
+ Scripts/Grid/
+  GridNode.cs
+  PieceData.cs
+ Scripts/
+  Level Generation/CellSetup.cs
+  Managers/
+   GridManager.cs
+   InputManager.cs
+   LevelManager.cs
+   VisualManager.cs
+  ScriptableObjects/LevelDataSO.cs
+  Utils.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 
 [metadataReferences]

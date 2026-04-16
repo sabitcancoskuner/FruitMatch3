@@ -24,9 +24,4 @@ public class GridNode
         state = NodeState.Idle;
         data = new PieceData(coreID);
     }
-
-    public void SetState(NodeState newState)
-    {
-        state = newState;
-    }
 }

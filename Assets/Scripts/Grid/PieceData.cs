@@ -1,3 +1,4 @@
+using UnityEngine;
 
 public enum PieceType
 {
@@ -12,6 +13,7 @@ public enum PieceType
 public class PieceData
 {
     public int coreID;
+    public GameObject visualPiece;
     public PieceType type;
 
     public PieceData(int id, PieceType type = PieceType.Normal)

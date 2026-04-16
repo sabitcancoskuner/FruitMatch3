@@ -5,14 +5,10 @@ public class GridManager : MonoBehaviour
 {
     public static GridManager Instance;
 
-    [SerializeField] private int gridWidth;
-    [SerializeField] private int gridHeight;
-    [SerializeField] private int bufferSize;
-    [SerializeField] private GameObject idleObject;
-    [SerializeField] private GameObject matchingObject;
-
-    // TEMP LIST
-    private List<GameObject> activeObjects;
+    // Grid Settings
+    private int gridWidth;
+    private int gridHeight;
+    private int bufferSize;
 
     private GridNode[,] gridData;
 
@@ -25,33 +21,31 @@ public class GridManager : MonoBehaviour
         }
 
         Instance = this;
-
-        gridData = new GridNode[gridWidth, gridHeight + bufferSize];
-        activeObjects = new List<GameObject>();
     }
 
     private void OnEnable()
     {
-        InputManager.Instance.OnSwapRequested += HandleSwap;
+        InputManager.Instance.OnSwipeRequested += HandleSwap;
     }
 
     private void OnDisable()
     {
-        InputManager.Instance.OnSwapRequested -= HandleSwap;
+        InputManager.Instance.OnSwipeRequested -= HandleSwap;
     }
 
     private void Start() 
     {
         InitializeGrid();
-        PaintGrid();
     }
 
     private void InitializeGrid()
     {
         LevelDataSO levelToLoad = LevelManager.Instance.levels[0];
         gridHeight = levelToLoad.height;
-        gridWidth = levelToLoad.width;
+        gridWidth  = levelToLoad.width;
         bufferSize = levelToLoad.bufferSize;
+
+        gridData = new GridNode[gridWidth, gridHeight + bufferSize];
 
         GridNode node;
 
@@ -60,12 +54,22 @@ public class GridManager : MonoBehaviour
         {
             for (int x = 0; x < gridWidth; x++)
             {
-                int flattenedNodeID = (x * gridWidth) + y;
-                int id = Random.Range(0, 5);
+                int flattenedNodeID = (y * gridWidth) + x;
+                int id;
+
+                if (levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID != 0)
+                {
+                    id = levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID;
+                }
+                else
+                {
+                    id = Random.Range(1, 6);
+                }
 
                 if (levelToLoad.gridLayout[flattenedNodeID].isPlayable)
                 {
-                    node = new GridNode(x, y, id);  
+                    node = new GridNode(x, y, id);
+                    node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
                 }
                 else
                 {
@@ -198,10 +202,10 @@ public class GridManager : MonoBehaviour
         return false;
     }
 
-    private void HandleSwap(Vector2 posA, Vector2 posB)
+    private void HandleSwap(Vector2 swipeStartPosition, Vector2 swipeDirection)
     {
-        Vector2Int gridPosA = Utils.CalculateGridLocation(posA);
-        Vector2Int gridPosB = Utils.CalculateGridLocation(posB);
+        Vector2Int gridPosA = Utils.CalculateGridLocation(swipeStartPosition);
+        Vector2Int gridPosB = Utils.CalculateGridLocation(swipeStartPosition + swipeDirection);
 
         if (!IsInBounds(gridPosA) || !IsInBounds(gridPosB)) 
         {
@@ -218,7 +222,10 @@ public class GridManager : MonoBehaviour
         PieceData temp = gridData[gridPosA.x, gridPosA.y].data;
         gridData[gridPosA.x, gridPosA.y].data = gridData[gridPosB.x, gridPosB.y].data;
         gridData[gridPosB.x, gridPosB.y].data = temp;
+
         Debug.Log("Swapping Pos A: (" + gridPosA.x + ", " + gridPosA.y + ") with Pos B: (" + gridPosB.x + ", " + gridPosB.y + ")");
+        VisualManager.Instance.SwapPieces(gridData[gridPosA.x, gridPosA.y].data.visualPiece, 
+                                          gridData[gridPosB.x, gridPosB.y].data.visualPiece);
 
         // Reset states before rescanning
         for (int x = 0; x < gridWidth; x++)
@@ -236,37 +243,6 @@ public class GridManager : MonoBehaviour
                 ScanGrid(x, y);
             }
         }
-        PaintGrid();
     }
 
-    // TEMP METHOD FOR VISUAlS
-    private void PaintGrid()
-    {
-        if (activeObjects.Count != 0)
-        {
-            foreach (GameObject obj in activeObjects)
-            {
-                Destroy(obj);
-            }
-        }
-
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                if (!gridData[x, y].isPlayable) continue;
-
-                if (gridData[x, y].state == NodeState.Idle)
-                {
-                    GameObject obj =Instantiate(idleObject, new Vector2(x, y), Quaternion.identity);
-                    activeObjects.Add(obj);
-                }
-                else if (gridData[x, y].state == NodeState.Matching)
-                {
-                    GameObject obj = Instantiate(matchingObject, new Vector2(x, y), Quaternion.identity);
-                    activeObjects.Add(obj);
-                }
-            }
-        }
-    }
 }

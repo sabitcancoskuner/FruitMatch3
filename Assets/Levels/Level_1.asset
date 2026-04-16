@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94aee9053a2fa5446a6d192576b2c1b3, type: 3}
   m_Name: Level_1
   m_EditorClassIdentifier: Assembly-CSharp::LevelDataSO
-  width: 9
-  height: 9
-  bufferSize: 5
-  movesAllowed: 15
+  width: 7
+  height: 7
+  bufferSize: 2
+  movesAllowed: 30
   gridLayout:
   - isPlayable: 1
     preSpawnItemID: 0
@@ -46,136 +46,72 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 5
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 2
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
   - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 1
