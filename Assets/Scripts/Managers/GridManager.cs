@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -57,6 +58,7 @@ public class GridManager : MonoBehaviour
                 int flattenedNodeID = (y * gridWidth) + x;
                 int id;
 
+                // Pre-defined spawns.
                 if (levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID != 0)
                 {
                     id = levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID;
@@ -81,11 +83,28 @@ public class GridManager : MonoBehaviour
         }
 
         // Initialize buffer
+        for (int y = gridHeight; y < gridHeight + bufferSize; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                int id = Random.Range(1, 6);
+                node = new GridNode(x, y, id);
+                node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
+                gridData[x, y] = node;
+            }
+        }
+    }
+
+    private void ScanGrid(Vector2Int gridPosition)
+    {
+        ScanGrid(gridPosition.x, gridPosition.y);
     }
 
     private void ScanGrid(int x, int y)
     {
         if (!IsInBounds(x, y)) return;
+        if (gridData[x, y].data == null) return;
+        if (gridData[x, y].state == NodeState.Falling) return;
 
         List<Vector2Int> horizontalMatchPositions;
         List<Vector2Int> verticalMatchPositions;
@@ -96,20 +115,46 @@ public class GridManager : MonoBehaviour
         horizontalMatchPositions = ScanHorizontal(center, coreID);
         verticalMatchPositions = ScanVertical(center, coreID);
 
-        if (horizontalMatchPositions != null)
+        if (horizontalMatchPositions.Count >= 3)
         {
-            foreach(Vector2Int pos in horizontalMatchPositions)
+            ProcessMatch(horizontalMatchPositions);      
+        }
+
+        if (verticalMatchPositions.Count >= 3)
+        {
+            ProcessMatch(verticalMatchPositions);
+        }
+    }
+
+    private void ProcessMatch(List<Vector2Int> positions)
+    {
+        List<PieceData> extractedData = new List<PieceData>();
+        HashSet<int> affectedColumns = new HashSet<int>();
+
+        foreach (Vector2Int pos in positions)
+        {
+            GridNode node = GetNodeAt(pos);
+            if (node.state != NodeState.Matching && node.data != null)
             {
-                gridData[pos.x, pos.y].state = NodeState.Matching;
+                node.state = NodeState.Matching;
+                extractedData.Add(node.data);
+                node.data = null;
+
+                affectedColumns.Add(pos.x);
             }
         }
 
-        if (verticalMatchPositions != null)
+        VisualManager.Instance.DestroyPieces(extractedData);
+
+        foreach (Vector2Int pos in positions)
         {
-            foreach(Vector2Int pos in verticalMatchPositions)
-            {
-                gridData[pos.x, pos.y].state = NodeState.Matching;
-            }
+            GridNode node = GetNodeAt(pos);
+            node.state = NodeState.Idle;
+        }
+
+        foreach (int x in affectedColumns)
+        {
+            ProcessGravityForColumn(x);
         }
     }
 
@@ -125,7 +170,7 @@ public class GridManager : MonoBehaviour
             if (!gridData[center.x, y].isPlayable) break;
 
             GridNode next = gridData[center.x, y];
-            if (next.state != NodeState.Idle || next.data.coreID != id) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(center.x, y));
             count++;
@@ -137,18 +182,13 @@ public class GridManager : MonoBehaviour
             if (!gridData[center.x, y].isPlayable) break;
 
             GridNode next = gridData[center.x, y];
-            if (next.state != NodeState.Idle || next.data.coreID != id) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(center.x, y));
             count++;
         }
 
-        if (count >= 3)
-        {
-            return positions;
-        }
-
-        return null;
+        return positions;
     }
 
     private List<Vector2Int> ScanHorizontal(Vector2Int center, int id)
@@ -163,7 +203,7 @@ public class GridManager : MonoBehaviour
             if (!gridData[x, center.y].isPlayable) break;
 
             GridNode next = gridData[x, center.y];
-            if (next.state != NodeState.Idle || next.data.coreID != id) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(x, center.y));
             count++;
@@ -175,18 +215,79 @@ public class GridManager : MonoBehaviour
             if (!gridData[x, center.y].isPlayable) break;
 
             GridNode next = gridData[x, center.y];
-            if (next.state != NodeState.Idle || next.data.coreID != id) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(x, center.y));
             count++;
         }
 
-        if (count >= 3)
-        {
-            return positions;
-        }
+        return positions;
+    }
 
-        return null;
+    private void ProcessGravityForColumn(int x)
+    {
+        int spawnHeight = gridHeight + bufferSize;
+
+        for (int y = 0; y < gridHeight + bufferSize; y++)
+        {
+            GridNode node = GetNodeAt(x, y);
+
+            if (!node.isPlayable) continue;
+
+            if (node.data == null && node.state == NodeState.Idle)
+            {
+                bool pieceFound = false;
+
+                for (int i = y + 1; i < gridHeight + bufferSize; i++)
+                {
+                    GridNode nodeAbove = GetNodeAt(x, i);
+
+                    if (!nodeAbove.isPlayable) continue;
+
+                    // If we find ANY piece above us (Idle, Falling, or Matching)
+                    if (nodeAbove.data != null)
+                    {
+                        pieceFound = true; // Don't spawn from the sky, we have a piece above us!
+
+                        // Only pull it down if it's Idle. If it's already falling, we just wait for it to land!
+                        if (nodeAbove.state == NodeState.Idle)
+                        {
+                            // Move piece down
+                            node.data = nodeAbove.data;
+                            nodeAbove.data = null;
+                            node.state = NodeState.Falling;
+
+                            // Callback
+                            VisualManager.Instance.MovePiece(node.data.visualPiece, node.xPosition, node.yPosition, () =>
+                            {
+                                node.state = NodeState.Idle;
+                                ScanGrid(node.xPosition, node.yPosition);
+                                ProcessGravityForColumn(node.xPosition);
+                            });
+                        }
+                        
+                        break;
+                    }
+                }
+
+                if (!pieceFound)
+                {
+                    int newID = Random.Range(1, 6);
+                    node.data = new PieceData(newID);
+                    node.state = NodeState.Falling;
+
+                    node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, spawnHeight, newID - 1);
+                    spawnHeight++;
+
+                    VisualManager.Instance.MovePiece(node.data.visualPiece, node.xPosition, node.yPosition, () =>
+                    {
+                        node.state = NodeState.Idle;
+                        ScanGrid(node.xPosition, node.yPosition);
+                        ProcessGravityForColumn(node.xPosition);
+                    });
+                }
+            }
+        }
     }
 
     private bool IsInBounds(Vector2Int gridPos)
@@ -212,37 +313,48 @@ public class GridManager : MonoBehaviour
             Debug.Log("Out of bounds");
             return;
         }
-        if (!gridData[gridPosA.x, gridPosA.y].isPlayable || !gridData[gridPosB.x, gridPosB.y].isPlayable) 
+
+        GridNode nodeA = GetNodeAt(gridPosA);
+        GridNode nodeB = GetNodeAt(gridPosB);
+
+        if (!nodeA.isPlayable || !nodeB.isPlayable) 
         {
             Debug.Log("Can not swap unplayable nodes");
             return;
         }
+        if (nodeA.data == null || nodeB.data == null)
+        {
+            Debug.Log("Can not swap empty nodes.");
+            return;
+        }
+        if (nodeA.state == NodeState.Falling || nodeA.state == NodeState.Matching ||
+            nodeB.state == NodeState.Falling || nodeB.state == NodeState.Matching)
+        {
+            Debug.Log("Can not swap matching or falling nodes.");
+            return;
+        }
 
         // Swap the data
-        PieceData temp = gridData[gridPosA.x, gridPosA.y].data;
-        gridData[gridPosA.x, gridPosA.y].data = gridData[gridPosB.x, gridPosB.y].data;
-        gridData[gridPosB.x, gridPosB.y].data = temp;
+        PieceData temp = nodeA.data;
+        nodeA.data = nodeB.data;
+        nodeB.data = temp;
 
-        Debug.Log("Swapping Pos A: (" + gridPosA.x + ", " + gridPosA.y + ") with Pos B: (" + gridPosB.x + ", " + gridPosB.y + ")");
-        VisualManager.Instance.SwapPieces(gridData[gridPosA.x, gridPosA.y].data.visualPiece, 
-                                          gridData[gridPosB.x, gridPosB.y].data.visualPiece);
-
-        // Reset states before rescanning
-        for (int x = 0; x < gridWidth; x++)
+        VisualManager.Instance.SwapPieces(nodeA.data.visualPiece, nodeB.data.visualPiece, () =>
         {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                gridData[x, y].state = NodeState.Idle;
-            }
-        }
+            ScanGrid(gridPosA);
+            ScanGrid(gridPosB);
+        });
 
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int y = 0; y < gridHeight; y++)
-            {
-                ScanGrid(x, y);
-            }
-        }
+    }
+
+    private GridNode GetNodeAt(Vector2Int index)
+    {
+        return GetNodeAt(index.x, index.y);
+    }
+
+    private GridNode GetNodeAt(int x, int y)
+    {
+        return gridData[x, y];
     }
 
 }

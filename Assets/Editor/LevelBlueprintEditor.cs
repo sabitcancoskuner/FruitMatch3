@@ -360,6 +360,9 @@ public class LevelBlueprintEditor : EditorWindow
 
         if (!layoutValid)
             Debug.LogWarning("[LevelBlueprintEditor] gridLayout size mismatch – loaded empty grid.");
+        else
+            Debug.Log($"[LevelBlueprintEditor] Loaded → {AssetDatabase.GetAssetPath(asset)}");
+        
 
         Repaint();
     }
