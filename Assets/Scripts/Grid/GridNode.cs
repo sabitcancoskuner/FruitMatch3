@@ -3,7 +3,8 @@ public enum NodeState
 {
     Idle,
     Falling,
-    Matching
+    Matching,
+    Swapping
 }
 
 [System.Serializable]
