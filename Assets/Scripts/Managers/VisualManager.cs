@@ -32,7 +32,7 @@ public class VisualManager : MonoBehaviour
         return Instantiate(pieces[coreID], spawnPos, Quaternion.identity);
     }
 
-    public GameObject SpawnPowerup(PieceType type, int x, int y)
+    public GameObject SpawnPowerup(int x, int y, PieceType type)
     {
         Vector3 spawnPos = new Vector3(x, y);
         return Instantiate(GetPowerupObject(type), spawnPos, Quaternion.identity);
@@ -51,7 +51,7 @@ public class VisualManager : MonoBehaviour
             case PieceType.Bomb:
                 return bomb;
 
-            case PieceType.Disco:
+            case PieceType.DiscoBall:
                 return discoBall;
 
             // SHOULD NOT RUN
@@ -62,9 +62,6 @@ public class VisualManager : MonoBehaviour
 
     public void SwapPieces(GameObject pieceA, GameObject pieceB, Vector3 targetA, Vector3 targetB, Action onCompleteCallback = null)
     {
-        Tween.StopAll(pieceA);
-        Tween.StopAll(pieceB);
-
         TweenSettings settings = new TweenSettings(duration: 0.1f, ease: Ease.InOutCubic);
 
         Sequence.Create()

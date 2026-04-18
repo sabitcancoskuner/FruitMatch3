@@ -59,20 +59,53 @@ public class GridManager : MonoBehaviour
                 int flattenedNodeID = (y * gridWidth) + x;
                 int id;
 
+                CellSetup preSpawnCell = levelToLoad.gridLayout[flattenedNodeID];
+
                 // Pre-defined spawns.
-                if (levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID != 0)
+                if (preSpawnCell.preSpawnItemID != 0)
                 {
-                    id = levelToLoad.gridLayout[flattenedNodeID].preSpawnItemID;
+                    id = preSpawnCell.preSpawnItemID;
                 }
                 else
                 {
                     id = GetSafeRandomID(x, y);
                 }
 
-                if (levelToLoad.gridLayout[flattenedNodeID].isPlayable)
+                if (preSpawnCell.isPlayable)
                 {
                     node = new GridNode(x, y, id);
-                    node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
+
+                    if (preSpawnCell.type == ItemType.Powerup)
+                    {   
+                        // Vertical rocket
+                        if (preSpawnCell.preSpawnItemID == 100)
+                        {
+                            node.data.type = PieceType.VerticalRocket;
+                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.VerticalRocket);
+                        }
+                        // Horizontal rocket
+                        else if (preSpawnCell.preSpawnItemID == 200)
+                        {
+                            node.data.type = PieceType.HorizontalRocket;
+                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.HorizontalRocket);
+                        }
+                        // Bomb
+                        else if (preSpawnCell.preSpawnItemID == 300)
+                        {
+                            node.data.type = PieceType.Bomb;
+                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.Bomb);
+                        }
+                        // Disco Ball
+                        else if (preSpawnCell.preSpawnItemID == 400)
+                        {
+                            node.data.type = PieceType.DiscoBall;
+                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.DiscoBall);
+                        }
+                    }
+                    else
+                    {
+                        node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
+                    }
                 }
                 else
                 {
@@ -232,7 +265,7 @@ public class GridManager : MonoBehaviour
         {
             PieceData newData = new PieceData(1000, Utils.GetPieceType(matchToProcess.shape));
             centerNode.data = newData;
-            centerNode.data.visualPiece = VisualManager.Instance.SpawnPowerup(centerNode.data.type, centerNode.xPosition, centerNode.yPosition);
+            centerNode.data.visualPiece = VisualManager.Instance.SpawnPowerup( centerNode.xPosition, centerNode.yPosition, centerNode.data.type);
         }
 
         foreach (GridNode node in matchToProcess.matchedNodes)
@@ -497,10 +530,10 @@ public class GridManager : MonoBehaviour
         if (gridPosition.x < 0 || gridPosition.x >= gridWidth || gridPosition.y < 0 || gridPosition.y >= gridHeight)
             return;
     
-        GridNode tapppedNode = GetNodeAt(gridPosition);
+        GridNode tappedNode = GetNodeAt(gridPosition);
 
-        if (tapppedNode.data.type != PieceType.Normal)
-            ProcessPowerup(tapppedNode, tapppedNode.data?.coreID ?? -1);
+        if (tappedNode.data.type != PieceType.Normal)
+            ProcessPowerup(tappedNode, Random.Range(1, 6));
     }
 
     private void ProcessPowerup(GridNode node, int targetCoreID = -1)
@@ -519,7 +552,7 @@ public class GridManager : MonoBehaviour
                 ProcessBombPowerup(node);
                 break;
             
-            case PieceType.Disco:
+            case PieceType.DiscoBall:
                 ProcessDiscoPowerup(node, targetCoreID);
                 break;
             
@@ -593,7 +626,8 @@ public class GridManager : MonoBehaviour
 
     private void ProcessDiscoPowerup(GridNode centerNode, int targetCoreID)
     {
-        if (targetCoreID == -1) return;
+        Debug.Log(targetCoreID);
+        if (targetCoreID == -1)  return;
 
         HashSet<int> affectedColumns = new HashSet<int>();
 

@@ -27,7 +27,7 @@ public class Utils
                 return PieceType.Bomb;
             
             case MatchShape.Match5Disco:
-                return PieceType.Disco;
+                return PieceType.DiscoBall;
 
             // SHOULD NOT RUN
             default:    

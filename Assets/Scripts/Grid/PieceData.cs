@@ -2,9 +2,10 @@ using UnityEngine;
 
 public enum PieceType
 {
+    None,
     Normal,
     Bomb,
-    Disco,
+    DiscoBall,
     VerticalRocket,
     HorizontalRocket
 }

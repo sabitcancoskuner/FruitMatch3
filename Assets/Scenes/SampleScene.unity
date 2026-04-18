@@ -772,11 +772,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisualManager
   pieces:
+  - {fileID: 7439958013631451671, guid: 0b87ba38cd9ff524f9f3f7803d9b455e, type: 3}
   - {fileID: 312660384496120427, guid: 3bd05e613fe854d4989313c422c7f646, type: 3}
+  - {fileID: 8024495702275750451, guid: d2d795c93c8f38c43876da732e2c282b, type: 3}
   - {fileID: 6633694816489906814, guid: 391150a84ffde5c4ea6443b477e816cf, type: 3}
   - {fileID: 8492056737451046522, guid: 78cbec591e6f49a489cb5f7de5dd092a, type: 3}
-  - {fileID: 7439958013631451671, guid: 0b87ba38cd9ff524f9f3f7803d9b455e, type: 3}
-  - {fileID: 8024495702275750451, guid: d2d795c93c8f38c43876da732e2c282b, type: 3}
   verticalRocket: {fileID: 7427570587212522057, guid: 9d136008ab8f8c248a78a53247982c0f, type: 3}
   horizontalRocket: {fileID: 9174485760606978658, guid: 979fab0d12faad1428dd66bb28cf121f, type: 3}
   bomb: {fileID: 6808296014636649712, guid: 5ef833d2d26e4844cbb615b85b7cc0aa, type: 3}
