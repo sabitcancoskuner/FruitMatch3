@@ -194,8 +194,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputManager
   playerInputs: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  maximumPressTime: 0.1
   minimumDistance: 0.2
-  maximumTime: 1
+  maximumTime: 0.25
   directionThreshold: 0.8
 --- !u!4 &307024127
 Transform:
@@ -776,6 +777,10 @@ MonoBehaviour:
   - {fileID: 8492056737451046522, guid: 78cbec591e6f49a489cb5f7de5dd092a, type: 3}
   - {fileID: 7439958013631451671, guid: 0b87ba38cd9ff524f9f3f7803d9b455e, type: 3}
   - {fileID: 8024495702275750451, guid: d2d795c93c8f38c43876da732e2c282b, type: 3}
+  verticalRocket: {fileID: 7427570587212522057, guid: 9d136008ab8f8c248a78a53247982c0f, type: 3}
+  horizontalRocket: {fileID: 9174485760606978658, guid: 979fab0d12faad1428dd66bb28cf121f, type: 3}
+  bomb: {fileID: 6808296014636649712, guid: 5ef833d2d26e4844cbb615b85b7cc0aa, type: 3}
+  discoBall: {fileID: 2617296120130070546, guid: af885f27f9b91ad448e1987df43e1ec7, type: 3}
 --- !u!4 &2005405541
 Transform:
   m_ObjectHideFlags: 0

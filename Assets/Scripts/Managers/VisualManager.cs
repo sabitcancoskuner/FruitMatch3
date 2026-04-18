@@ -9,6 +9,12 @@ public class VisualManager : MonoBehaviour
 
     [SerializeField] private GameObject[] pieces;
 
+    [Header("Super Powers")]
+    [SerializeField] private GameObject verticalRocket;
+    [SerializeField] private GameObject horizontalRocket;
+    [SerializeField] private GameObject bomb;
+    [SerializeField] private GameObject discoBall;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -24,6 +30,34 @@ public class VisualManager : MonoBehaviour
     {
         Vector3 spawnPos = new Vector3(x, y);
         return Instantiate(pieces[coreID], spawnPos, Quaternion.identity);
+    }
+
+    public GameObject SpawnPowerup(PieceType type, int x, int y)
+    {
+        Vector3 spawnPos = new Vector3(x, y);
+        return Instantiate(GetPowerupObject(type), spawnPos, Quaternion.identity);
+    }
+
+    private GameObject GetPowerupObject(PieceType type)
+    {
+        switch (type)
+        {
+            case PieceType.VerticalRocket:
+                return verticalRocket;
+
+            case PieceType.HorizontalRocket:
+                return horizontalRocket;
+
+            case PieceType.Bomb:
+                return bomb;
+
+            case PieceType.Disco:
+                return discoBall;
+
+            // SHOULD NOT RUN
+            default:
+                return pieces[0];
+        }
     }
 
     public void SwapPieces(GameObject pieceA, GameObject pieceB, Vector3 targetA, Vector3 targetB, Action onCompleteCallback = null)
@@ -43,9 +77,13 @@ public class VisualManager : MonoBehaviour
     {
         foreach (PieceData piece in pieces)
         {
-            Tween.StopAll(piece.visualPiece);
-            Destroy(piece.visualPiece);
+            DestroyPiece(piece.visualPiece);
         }
+    }
+
+    public void DestroyPiece(GameObject piece)
+    {
+        Destroy(piece);
     }
 
     public void MovePiece(GameObject piece, int x, int y, float delay, Action onCompleteCallback = null)

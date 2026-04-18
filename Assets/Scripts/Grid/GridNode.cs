@@ -20,8 +20,9 @@ public class GridNode
     {
         xPosition = x;
         yPosition = y;
+        if (!playable) return;
+        
         isPlayable = playable;
-
         state = NodeState.Idle;
         data = new PieceData(coreID);
     }

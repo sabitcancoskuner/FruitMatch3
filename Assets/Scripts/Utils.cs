@@ -12,5 +12,29 @@ public class Utils
         position.z = Camera.main.nearClipPlane;
         return Camera.main.ScreenToWorldPoint(position);
     }
+
+    public static PieceType GetPieceType(MatchShape shape)
+    {
+        switch (shape)
+        {
+            case MatchShape.Match4Horizontal:
+                return PieceType.VerticalRocket;
+            
+            case MatchShape.Match4Vertical:
+                return PieceType.HorizontalRocket;
+            
+            case MatchShape.Match5Bomb:
+                return PieceType.Bomb;
+            
+            case MatchShape.Match5Disco:
+                return PieceType.Disco;
+
+            // SHOULD NOT RUN
+            default:    
+                return PieceType.Normal;
+        }
+
+
+    }
     
 }

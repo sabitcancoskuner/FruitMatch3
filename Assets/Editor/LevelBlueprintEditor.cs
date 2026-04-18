@@ -13,7 +13,7 @@ public class LevelBlueprintEditor : EditorWindow
     private CellSetup[,] gridCells;
 
     // Paint state
-    private enum PaintMode { TogglePlayable, PlaceTile, EraseTile }
+    private enum PaintMode { TogglePlayable, PlaceTile, PlacePowerup, EraseTile }
     private PaintMode paintMode    = PaintMode.TogglePlayable;
 
     private int selectedTileID = 1;
@@ -42,6 +42,11 @@ public class LevelBlueprintEditor : EditorWindow
         Color.darkOrange,  // 5
         Color.rebeccaPurple,  // 6
         Color.deepPink,  // 7
+    };
+    private static readonly Color[] PowerupColors =
+    {
+        Color.aliceBlue,
+        Color.beige
     };
 
     [MenuItem("Window/Level Layout Generator")]
@@ -117,6 +122,7 @@ public class LevelBlueprintEditor : EditorWindow
         EditorGUILayout.BeginHorizontal();
         DrawModeButton("Toggle Playable", PaintMode.TogglePlayable);
         DrawModeButton("Place Tile", PaintMode.PlaceTile);
+        DrawModeButton("Place Powerup", PaintMode.PlacePowerup);
         DrawModeButton("Erase Tile", PaintMode.EraseTile);
         GUI.backgroundColor = Color.white;
         EditorGUILayout.EndHorizontal();
@@ -133,6 +139,28 @@ public class LevelBlueprintEditor : EditorWindow
 
                 GUIStyle s = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 13 };
                 GUIContent content = new GUIContent(i.ToString(), $"Paint tile ID {i}");
+
+                if (GUILayout.Button(content, s, GUILayout.Width(38), GUILayout.Height(38)))
+                    selectedTileID = i;
+            }
+
+            GUI.backgroundColor = Color.white;
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        if (paintMode == PaintMode.PlacePowerup)
+        {
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("Tile ID:");
+            EditorGUILayout.BeginHorizontal();
+
+            for (int i = 1; i <= 4; i++)
+            {
+                GUI.backgroundColor = TileColors[i];
+
+                GUIStyle s = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 13 };
+                GUIContent content = new GUIContent(i.ToString(), $"Paint powerup ID {i}");
 
                 if (GUILayout.Button(content, s, GUILayout.Width(38), GUILayout.Height(38)))
                     selectedTileID = i;

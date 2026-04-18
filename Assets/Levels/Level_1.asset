@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelDataSO
   width: 7
   height: 7
-  bufferSize: 4
+  bufferSize: 7
   movesAllowed: 30
   gridLayout:
   - isPlayable: 1
@@ -40,7 +40,19 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
+    preSpawnItemID: 3
+  - isPlayable: 1
+    preSpawnItemID: 4
+  - isPlayable: 1
     preSpawnItemID: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+  - isPlayable: 1
+    preSpawnItemID: 3
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
@@ -56,7 +68,7 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
@@ -70,7 +82,7 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
@@ -84,7 +96,7 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
@@ -98,19 +110,7 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 4
   - isPlayable: 1
     preSpawnItemID: 0
   - isPlayable: 1

@@ -13,6 +13,15 @@ public class InputManager : MonoBehaviour
     private InputAction primaryContact;
     private InputAction primaryPosition;
 
+    private InputAction touchPress;
+    private InputAction touchPosition;
+
+    [Header("Press Settings")]
+    [SerializeField] private float maximumPressTime = 1f;
+    private float pressStartTime;
+    private float pressEndTime;
+    private Vector2 pressWorldPosition;
+
     [Header("Swipe Settings")]
     [SerializeField] private float minimumDistance = .2f;
     [SerializeField] private float maximumTime = 1f;
@@ -24,6 +33,7 @@ public class InputManager : MonoBehaviour
     private float endTime;
 
     public event Action<Vector2, Vector2> OnSwipeRequested;
+    public event Action<Vector2Int> OnScreenTapped;
 
     private void Awake() {
         if (Instance != null && Instance != this)
@@ -37,24 +47,29 @@ public class InputManager : MonoBehaviour
         touchActionMap = playerInputs.FindActionMap("Touch");
         primaryContact = touchActionMap.FindAction("PrimaryContact");
         primaryPosition = touchActionMap.FindAction("PrimaryPosition");
+        touchPress = touchActionMap.FindAction("TouchPress");
+        touchPosition = touchActionMap.FindAction("TouchPosition");
     }
 
     private void Start()
     {
         primaryContact.started += ctx => StartTouchPrimary(ctx);
         primaryContact.canceled += ctx => EndTouchPrimary(ctx);
+
+        touchPress.performed += ctx => StartTouchPress(ctx);
+        touchPress.canceled += ctx => EndTouchPress(ctx);
     }
 
     private void StartTouchPrimary(InputAction.CallbackContext ctx)
     {
         startPosition = Utils.ScreenToWorld(primaryPosition.ReadValue<Vector2>());
-        startTime = (float)ctx.startTime;
+        startTime = Time.time;
     }
 
     private void EndTouchPrimary(InputAction.CallbackContext ctx)
     {
         endPosition = Utils.ScreenToWorld(primaryPosition.ReadValue<Vector2>());
-        endTime = (float)ctx.startTime;
+        endTime = Time.time;
 
         DetectSwipe();
     }
@@ -70,11 +85,11 @@ public class InputManager : MonoBehaviour
         {
             Vector3 direction = endPosition - startPosition;
             Vector2 direction2D = new Vector2(direction.x, direction.y).normalized;
-            SwipeDirection(direction2D);
+            Swipe(direction2D);
         }
     }
 
-    private void SwipeDirection(Vector2 direction)
+    private void Swipe(Vector2 direction)
     {
         // Swipe Up
         if (Vector2.Dot(Vector2.up, direction) > directionThreshold)
@@ -95,6 +110,23 @@ public class InputManager : MonoBehaviour
         else if (Vector2.Dot(Vector2.right, direction) > directionThreshold)
         {
             OnSwipeRequested?.Invoke(startPosition, Vector2.right);
+        }
+    }
+
+    private void StartTouchPress(InputAction.CallbackContext ctx)
+    {
+        Vector2 screenPosition = touchPosition.ReadValue<Vector2>();
+        pressWorldPosition  = Utils.ScreenToWorld(screenPosition);
+        pressStartTime = Time.time;
+    }
+
+    private void EndTouchPress(InputAction.CallbackContext ctx)
+    {
+        pressEndTime = Time.time;
+
+        if ((pressEndTime - pressStartTime) <= maximumPressTime)
+        {
+            OnScreenTapped?.Invoke(Utils.CalculateGridLocation(pressWorldPosition));
         }
     }
 }
