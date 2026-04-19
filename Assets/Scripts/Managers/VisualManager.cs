@@ -29,13 +29,16 @@ public class VisualManager : MonoBehaviour
     public GameObject SpawnPiece(int x, int y, int coreID)
     {
         Vector3 spawnPos = new Vector3(x, y);
-        return Instantiate(pieces[coreID], spawnPos, Quaternion.identity);
+        GameObject piece = pieces[coreID];
+        return ObjectPoolManager.SpawnObject(piece, spawnPos, Quaternion.identity);
     }
 
     public GameObject SpawnPowerup(int x, int y, PieceType type)
     {
         Vector3 spawnPos = new Vector3(x, y);
-        return Instantiate(GetPowerupObject(type), spawnPos, Quaternion.identity);
+        GameObject powerup = GetPowerupObject(type);
+
+        return ObjectPoolManager.SpawnObject(powerup, spawnPos, Quaternion.identity);
     }
 
     private GameObject GetPowerupObject(PieceType type)
@@ -80,15 +83,15 @@ public class VisualManager : MonoBehaviour
 
     public void DestroyPiece(GameObject piece)
     {
-        Destroy(piece);
+        ObjectPoolManager.ReturnObjectToPool(piece);
     }
 
     public void MovePiece(GameObject piece, int x, int y, float delay, Action onCompleteCallback = null)
     {
         // Speed and easing combined
         float distance = Vector2.Distance(piece.transform.position, new Vector2(x, y));
-        float calculatedDuration = distance * 0.10f;
-        float finalDuration = Mathf.Clamp(calculatedDuration, 0.2f, 0.4f);
+        float calculatedDuration = distance * 0.14f;
+        float finalDuration = Mathf.Clamp(calculatedDuration, 0.3f, 0.5f);
 
         TweenSettings settings = new TweenSettings(duration: finalDuration, ease: Ease.InQuad, startDelay: delay);
 

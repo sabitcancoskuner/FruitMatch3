@@ -63,6 +63,7 @@ Assets/
    GridManager.cs
    InputManager.cs
    LevelManager.cs
+   ObjectPoolManager.cs
    VisualManager.cs
   Match.cs
   ScriptableObjects/LevelDataSO.cs

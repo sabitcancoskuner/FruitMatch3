@@ -531,6 +531,7 @@ public class GridManager : MonoBehaviour
             return;
     
         GridNode tappedNode = GetNodeAt(gridPosition);
+        if (tappedNode.data == null) return;
 
         if (tappedNode.data.type != PieceType.Normal)
             ProcessPowerup(tappedNode, Random.Range(1, 6));
@@ -564,6 +565,10 @@ public class GridManager : MonoBehaviour
 
     private void ProcessRocketPowerup(GridNode centerNode, Vector2 direction)
     {
+        // Destroy rocket first
+        VisualManager.Instance.DestroyPiece(centerNode.data.visualPiece);
+        centerNode.data = null;
+        
         // Vertical Rocket
         if (direction == Vector2.up)
         {

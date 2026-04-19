@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 21288363ec454294a9c728bfc49ca92f
+guid: 324599a85c467e247946299044ddd46b
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -81861379335770073
-    second: discoball_0
+      213: -7984104769761968306
+    second: powerup_4_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -126,7 +126,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: discoball_0
+      name: powerup_4_0
       rect:
         serializedVersion: 2
         x: 19
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7203edb528b2ddef0800000000000000
-      internalID: -81861379335770073
+      spriteID: e4ff5d47303c23190800000000000000
+      internalID: -7984104769761968306
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      discoball_0: -81861379335770073
+      powerup_4_0: -7984104769761968306
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

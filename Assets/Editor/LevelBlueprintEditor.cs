@@ -210,7 +210,7 @@ public class LevelBlueprintEditor : EditorWindow
 
         // Load the piece texture from the sprites folder.
         if (pieceTextures[id] == null)
-            pieceTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Pieces/characters_{id}.png");
+            pieceTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Pieces/piece_{id}.png");
         
         return pieceTextures[id];
     }

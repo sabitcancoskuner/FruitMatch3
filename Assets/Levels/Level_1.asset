@@ -27,28 +27,7 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 5
-    type: 0
-  - isPlayable: 1
     preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 300
-    type: 1
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 5
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
@@ -63,13 +42,7 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 300
-    type: 1
-  - isPlayable: 1
     preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 5
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
@@ -90,14 +63,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 5
-    type: 0
-  - isPlayable: 1
     preSpawnItemID: 0
     type: 0
-  - isPlayable: 1
-    preSpawnItemID: 400
-    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -111,14 +78,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 5
-    type: 0
-  - isPlayable: 1
     preSpawnItemID: 0
     type: 0
-  - isPlayable: 1
-    preSpawnItemID: 400
-    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -132,7 +93,13 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 5
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
@@ -144,23 +111,56 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 4
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
     type: 0
