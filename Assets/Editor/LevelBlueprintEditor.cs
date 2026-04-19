@@ -1,6 +1,6 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class LevelBlueprintEditor : EditorWindow
 {
@@ -14,7 +14,7 @@ public class LevelBlueprintEditor : EditorWindow
     private CellSetup[,] gridCells;
 
     // Paint state
-    private enum PaintMode { TogglePlayable, PlaceTile, PlacePowerup, EraseTile }
+    private enum PaintMode { TogglePlayable, PlaceTile, PlacePowerup, PlaceCollectible, PlaceObstacle, EraseTile }
     private PaintMode paintMode = PaintMode.TogglePlayable;
 
     private int selectedTileID = 1;
@@ -23,6 +23,9 @@ public class LevelBlueprintEditor : EditorWindow
 
     // Asset binding 
     private LevelDataSO loadedLevel;
+
+    // Level goals
+    private List<LevelObjective> levelGoals = new List<LevelObjective>();
 
     // Scroll 
     private Vector2 gridScroll;
@@ -33,26 +36,35 @@ public class LevelBlueprintEditor : EditorWindow
 
     private Texture2D[] pieceTextures;
     private Texture2D[] powerupTextures;
+    private Texture2D[] collectibleTextures;
+    private Texture2D[] obstacleTextures;
 
     private static readonly Color ColUnplayable = Color.gray1;
     private static readonly Color ColEmpty = Color.gray8;
     private static readonly Color[] TileColors =
     {
-        Color.ghostWhite,  // 0 – random  (not selectable)
-        Color.saddleBrown,  // 1
+        Color.orange,  // 1
         Color.skyBlue,  // 2
         Color.softGreen,  // 3
-        Color.softYellow,  // 4
-        Color.darkOrange,  // 5
-        Color.rebeccaPurple,  // 6
-        Color.deepPink,  // 7
+        Color.violet,  // 4
+        Color.indianRed  // 5
     };
     private static readonly Color[] PowerupColors =
     {
-        Color.aliceBlue,
-        Color.aquamarine,
-        Color.violet,
-        Color.bisque
+        Color.royalBlue,
+        Color.paleVioletRed,
+        Color.darkRed,
+        Color.springGreen
+    };
+    private static readonly Color[] CollectibleColors =
+    {
+        Color.steelBlue,
+        Color.mediumPurple,
+        Color.yellowNice
+    };
+    private static readonly Color[] ObstacleColors =
+    {
+        Color.brown
     };
 
     [MenuItem("Window/Level Layout Generator")]
@@ -69,9 +81,11 @@ public class LevelBlueprintEditor : EditorWindow
 
     private void OnGUI()
     {
+        DrawAssetPanel();
+        GUILayout.Space(6);
         DrawSettingsPanel();
         GUILayout.Space(6);
-        DrawAssetPanel();
+        DrawGoalsPanel();
         GUILayout.Space(6);
         DrawPaintToolbar();
         GUILayout.Space(6);
@@ -129,6 +143,8 @@ public class LevelBlueprintEditor : EditorWindow
         DrawModeButton("Toggle Playable", PaintMode.TogglePlayable);
         DrawModeButton("Place Tile", PaintMode.PlaceTile);
         DrawModeButton("Place Powerup", PaintMode.PlacePowerup);
+        DrawModeButton("Place Collectible", PaintMode.PlaceCollectible);
+        DrawModeButton("Place Obstacle", PaintMode.PlaceObstacle);
         GUI.backgroundColor = Color.white;
         EditorGUILayout.EndHorizontal();
 
@@ -140,7 +156,7 @@ public class LevelBlueprintEditor : EditorWindow
 
             for (int i = 1; i <= 5; i++)
             {
-                GUI.backgroundColor = TileColors[i];
+                GUI.backgroundColor = TileColors[i - 1];
 
                 GUIStyle s = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 13 };
                 Texture2D texture = GetPieceTexture(i);
@@ -153,6 +169,7 @@ public class LevelBlueprintEditor : EditorWindow
                 if (i == 5)
                 {
                     GUIContent eraseContent = new GUIContent("X", $"Erase tile.");
+                    GUI.backgroundColor = Color.black;
 
                     if (GUILayout.Button(eraseContent, s, GUILayout.Width(45), GUILayout.Height(45)))
                         selectedTileID = 0;
@@ -185,6 +202,7 @@ public class LevelBlueprintEditor : EditorWindow
                 if (i == 4)
                 {
                     GUIContent eraseContent = new GUIContent("X", $"Erase tile.");
+                    GUI.backgroundColor = Color.black;
 
                     if (GUILayout.Button(eraseContent, s, GUILayout.Width(45), GUILayout.Height(45)))
                         selectedTileID = 0;
@@ -195,6 +213,108 @@ public class LevelBlueprintEditor : EditorWindow
 
             EditorGUILayout.EndHorizontal();
         }
+
+        if (paintMode == PaintMode.PlaceCollectible)
+        {
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("Powerup ID:");
+            EditorGUILayout.BeginHorizontal();
+
+            for (int i = 1; i <= 3; i++)
+            {
+                GUI.backgroundColor = CollectibleColors[i - 1];
+
+                GUIStyle s = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 13 };
+                Texture2D texture = GetCollectibleTexture(i);
+                GUIContent content = texture != null ? new GUIContent(texture, $"Paint collectible ID {i * 1000}") 
+                                                     : new GUIContent(i.ToString(), $"Paint powerup ID {i * 1000}");
+
+                if (GUILayout.Button(content, s, GUILayout.Width(45), GUILayout.Height(45)))
+                    selectedTileID = i * 1000;
+
+                if (i == 3)
+                {
+                    GUIContent eraseContent = new GUIContent("X", $"Erase tile.");
+                    GUI.backgroundColor = Color.black;
+
+                    if (GUILayout.Button(eraseContent, s, GUILayout.Width(45), GUILayout.Height(45)))
+                        selectedTileID = 0;
+                }
+            }
+            
+
+            GUI.backgroundColor = Color.white;
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        if (paintMode == PaintMode.PlaceObstacle)
+        {
+            GUILayout.Space(4);
+            EditorGUILayout.LabelField("Obstacle ID:");
+            EditorGUILayout.BeginHorizontal();
+
+            for (int i = 1; i <= 1; i++)
+            {
+                GUI.backgroundColor = ObstacleColors[i - 1];
+
+                GUIStyle s = new GUIStyle(GUI.skin.button) { fontStyle = FontStyle.Bold, fontSize = 13 };
+                Texture2D texture = GetObstacleTexture(i);
+                GUIContent content = texture != null ? new GUIContent(texture, $"Paint Obstacle ID {i * 10000}") 
+                                                     : new GUIContent(i.ToString(), $"Paint Obstacle ID {i * 10000}");
+
+                if (GUILayout.Button(content, s, GUILayout.Width(45), GUILayout.Height(45)))
+                    selectedTileID = i * 10000;
+
+                if (i == 1)
+                {
+                    GUIContent eraseContent = new GUIContent("X", $"Erase tile.");
+                    GUI.backgroundColor = Color.black;
+
+                    if (GUILayout.Button(eraseContent, s, GUILayout.Width(45), GUILayout.Height(45)))
+                        selectedTileID = 0;
+                }
+            }
+
+            GUI.backgroundColor = Color.white;
+
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    private void DrawGoalsPanel()
+    {
+        EditorGUILayout.LabelField("Level Goals", EditorStyles.boldLabel);
+
+        string[] collectibleNames = { "Blue Candy (1000)", "Purple Candy (2000)", "Yellow Candy (3000)" };
+        int[] collectibleIDs = { 1000, 2000, 3000 };
+
+        for (int i = 0; i < levelGoals.Count; i++)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            int currentIndex = System.Array.IndexOf(collectibleIDs, levelGoals[i].itemID);
+            if (currentIndex < 0) currentIndex = 0;
+
+            int newIndex = EditorGUILayout.Popup(currentIndex, collectibleNames, GUILayout.Width(170));
+            levelGoals[i].itemID = collectibleIDs[newIndex];
+
+            EditorGUILayout.LabelField("×", GUILayout.Width(14));
+            levelGoals[i].targetCount = Mathf.Max(1, EditorGUILayout.IntField(levelGoals[i].targetCount, GUILayout.Width(50)));
+
+            bool removed = GUILayout.Button("−", GUILayout.Width(24));
+
+            EditorGUILayout.EndHorizontal();
+
+            if (removed)
+            {
+                levelGoals.RemoveAt(i);
+                break;
+            }
+        }
+
+        if (GUILayout.Button("+ Add Goal", GUILayout.Height(22)))
+            levelGoals.Add(new LevelObjective { itemID = 1000, targetCount = 1 });
     }
 
     private void DrawModeButton(string label, PaintMode mode)
@@ -224,6 +344,28 @@ public class LevelBlueprintEditor : EditorWindow
             powerupTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Powerups/powerup_{id}.png");
 
         return powerupTextures[id];
+    }
+
+    private Texture2D GetCollectibleTexture(int id)
+    {
+        if (collectibleTextures == null)
+            collectibleTextures = new Texture2D[5];
+
+        if (collectibleTextures[id] == null)
+            collectibleTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Collectibles/candy_{id}.png");
+
+        return collectibleTextures[id];
+    }
+
+    private Texture2D GetObstacleTexture(int id)
+    {
+        if (obstacleTextures == null)
+            obstacleTextures = new Texture2D[2];
+        
+        if (obstacleTextures[id] == null)
+            obstacleTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Obstacles/obstacle_{id}.png");
+        
+        return obstacleTextures[id];
     }
 
     //  Grid
@@ -293,9 +435,13 @@ public class LevelBlueprintEditor : EditorWindow
         if (!cell.isPlayable)
             bg = ColUnplayable;
         else if (cell.preSpawnItemID > 0 && cell.type == ItemType.Piece)
-            bg = TileColors[Mathf.Clamp(cell.preSpawnItemID, 0, TileColors.Length - 1)];
+            bg = TileColors[Mathf.Clamp(cell.preSpawnItemID - 1, 0, TileColors.Length - 1)];
         else if (cell.preSpawnItemID > 0 && cell.type == ItemType.Powerup)
             bg = PowerupColors[Mathf.Clamp(cell.preSpawnItemID / 100 - 1, 0, PowerupColors.Length - 1)];
+        else if (cell.preSpawnItemID > 0 && cell.type == ItemType.Collectible)
+            bg = CollectibleColors[Mathf.Clamp(cell.preSpawnItemID / 1000 - 1, 0, PowerupColors.Length - 1)];
+        else if (cell.preSpawnItemID > 0 && cell.type == ItemType.Obstacle)
+            bg = ObstacleColors[Mathf.Clamp(cell.preSpawnItemID / 10000 - 1, 0, PowerupColors.Length - 1)];
         else
             bg = ColEmpty;
 
@@ -333,6 +479,14 @@ public class LevelBlueprintEditor : EditorWindow
                 case ItemType.Powerup:
                     texture = GetPowerupTexture(cell.preSpawnItemID / 100);
                     break;
+
+                case ItemType.Collectible:
+                    texture = GetCollectibleTexture(cell.preSpawnItemID / 1000);
+                    break;
+                
+                case ItemType.Obstacle:
+                    texture = GetObstacleTexture(cell.preSpawnItemID / 10000);
+                    break;
             }
 
             if (texture != null)
@@ -366,7 +520,7 @@ public class LevelBlueprintEditor : EditorWindow
                 if (cell.isPlayable)
                 {
                    cell.preSpawnItemID = selectedTileID;
-                   cell.type = ItemType.Piece;
+                   cell.type = SetItemType(selectedTileID);
                 }
                 break;
 
@@ -374,10 +528,38 @@ public class LevelBlueprintEditor : EditorWindow
                 if (cell.isPlayable)
                 {
                     cell.preSpawnItemID = selectedTileID;
-                    cell.type = ItemType.Powerup;
+                    cell.type = SetItemType(selectedTileID);
+                }
+                break;
+
+            case PaintMode.PlaceCollectible:
+                if (cell.isPlayable)
+                {
+                    cell.preSpawnItemID = selectedTileID;
+                    cell.type = SetItemType(selectedTileID);
+                }
+                break;
+
+            case PaintMode.PlaceObstacle:
+                if (cell.isPlayable)
+                {
+                    cell.preSpawnItemID = selectedTileID;
+                    cell.type = SetItemType(selectedTileID);
                 }
                 break;
         }
+    }
+
+    private ItemType SetItemType(int id)
+    {
+        if (id >= 10000)
+            return ItemType.Obstacle;
+        else if (id >= 1000)
+            return ItemType.Collectible;
+        else if (id >= 100)
+            return ItemType.Powerup;
+        
+        return ItemType.Piece;
     }
 
     //  Asset panel
@@ -432,6 +614,8 @@ public class LevelBlueprintEditor : EditorWindow
             }
         }
 
+        levelData.levelGoals = new List<LevelObjective>(levelGoals);
+
         EditorUtility.SetDirty(levelData);
         AssetDatabase.SaveAssets();
         Debug.Log($"[LevelBlueprintEditor] Saved → {AssetDatabase.GetAssetPath(levelData)}");
@@ -473,7 +657,10 @@ public class LevelBlueprintEditor : EditorWindow
             Debug.LogWarning("[LevelBlueprintEditor] gridLayout size mismatch – loaded empty grid.");
         else
             Debug.Log($"[LevelBlueprintEditor] Loaded → {AssetDatabase.GetAssetPath(asset)}");
-        
+
+        levelGoals = asset.levelGoals != null
+            ? new List<LevelObjective>(asset.levelGoals)
+            : new List<LevelObjective>();
 
         Repaint();
     }
@@ -507,6 +694,8 @@ public class LevelBlueprintEditor : EditorWindow
                     };
                 }
             }
+
+            newAsset.levelGoals = new List<LevelObjective>(levelGoals);
         }
 
         AssetDatabase.CreateAsset(newAsset, path);

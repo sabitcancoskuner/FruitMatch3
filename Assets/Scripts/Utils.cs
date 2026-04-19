@@ -13,25 +13,25 @@ public class Utils
         return Camera.main.ScreenToWorldPoint(position);
     }
 
-    public static PieceType GetPieceType(MatchShape shape)
+    public static int GetPowerupCoreID(MatchShape shape)
     {
         switch (shape)
         {
             case MatchShape.Match4Horizontal:
-                return PieceType.VerticalRocket;
+                return 100;
             
             case MatchShape.Match4Vertical:
-                return PieceType.HorizontalRocket;
+                return 200;
             
             case MatchShape.Match5Bomb:
-                return PieceType.Bomb;
+                return 300;
             
             case MatchShape.Match5Disco:
-                return PieceType.DiscoBall;
+                return 400;
 
             // SHOULD NOT RUN
             default:    
-                return PieceType.Normal;
+                return -1;
         }
 
 

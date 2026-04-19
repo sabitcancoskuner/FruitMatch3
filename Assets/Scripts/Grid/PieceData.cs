@@ -4,10 +4,9 @@ public enum PieceType
 {
     None,
     Normal,
-    Bomb,
-    DiscoBall,
-    VerticalRocket,
-    HorizontalRocket
+    Collectible,
+    Powerup,
+    Obstacle
 }
 
 [System.Serializable]

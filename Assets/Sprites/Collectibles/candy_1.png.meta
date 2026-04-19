@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 37206c3956ca36845af2e624326f1ecc
+guid: 0aa7f4e495d32a44eaad5b774f74da52
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6470460504253458178
-    second: 3_0
+      213: -7012956913514235924
+    second: Candy_Blue_3_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +51,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 450
+  spritePixelsToUnits: 500
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -126,13 +126,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: 3_0
+      name: Candy_Blue_3_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 396
-        height: 374
+        x: 101
+        y: 63
+        width: 399
+        height: 476
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -141,8 +141,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: ef817ce047e4436a0800000000000000
-      internalID: -6470460504253458178
+      spriteID: ce73dd8e7d8fcae90800000000000000
+      internalID: -7012956913514235924
       vertices: []
       indices: 
       edges: []
@@ -161,7 +161,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      3_0: -6470460504253458178
+      Candy_Blue_3_0: -7012956913514235924
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

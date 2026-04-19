@@ -10,12 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94aee9053a2fa5446a6d192576b2c1b3, type: 3}
-  m_Name: Level_1
+  m_Name: level_1
   m_EditorClassIdentifier: Assembly-CSharp::LevelDataSO
   width: 7
   height: 7
-  bufferSize: 7
+  bufferSize: 2
   movesAllowed: 30
+  levelGoals:
+  - itemID: 1000
+    targetCount: 7
   gridLayout:
   - isPlayable: 1
     preSpawnItemID: 0
@@ -48,8 +51,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -69,8 +72,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -90,8 +93,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -111,8 +114,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -132,8 +135,8 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0

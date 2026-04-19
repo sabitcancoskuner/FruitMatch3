@@ -2,6 +2,7 @@
 public enum ItemType
 {
     Piece,
+    Collectible,
     Powerup,
     Obstacle
 }
@@ -14,4 +15,12 @@ public class CellSetup
     // To spawn pre defined items, 0 is normal piece other ones are specific IDs
     public int preSpawnItemID = 0;
     public ItemType type;
+}
+
+[System.Serializable]
+public class LevelObjective
+
+{
+    public int itemID;
+    public int targetCount;
 }

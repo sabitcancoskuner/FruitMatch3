@@ -10,7 +10,14 @@ public class GridManager : MonoBehaviour
     private int gridHeight;
     private int bufferSize;
 
+    // Level details and goals.
+    private int movesAllowed;
+    private List<LevelObjective> levelGoals;
+
     private GridNode[,] gridData;
+
+    private int _powerupChainDepth = 0;
+    private HashSet<int> _pendingGravityColumns = new HashSet<int>();
 
     private void Awake()
     {
@@ -42,10 +49,14 @@ public class GridManager : MonoBehaviour
 
     private void InitializeGrid()
     {
-        LevelDataSO levelToLoad = LevelManager.Instance.levels[0];
+        // Instantiating the level data so changes made during the gameplay does not effect the data in the serialized object.
+        LevelDataSO levelToLoad = Instantiate(LevelManager.Instance.levels[0]);
         gridHeight = levelToLoad.height;
         gridWidth  = levelToLoad.width;
         bufferSize = levelToLoad.bufferSize;
+
+        movesAllowed = levelToLoad.movesAllowed;
+        levelGoals = levelToLoad.levelGoals;
 
         gridData = new GridNode[gridWidth, gridHeight + bufferSize];
 
@@ -77,35 +88,18 @@ public class GridManager : MonoBehaviour
 
                     if (preSpawnCell.type == ItemType.Powerup)
                     {   
-                        // Vertical rocket
-                        if (preSpawnCell.preSpawnItemID == 100)
-                        {
-                            node.data.type = PieceType.VerticalRocket;
-                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.VerticalRocket);
-                        }
-                        // Horizontal rocket
-                        else if (preSpawnCell.preSpawnItemID == 200)
-                        {
-                            node.data.type = PieceType.HorizontalRocket;
-                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.HorizontalRocket);
-                        }
-                        // Bomb
-                        else if (preSpawnCell.preSpawnItemID == 300)
-                        {
-                            node.data.type = PieceType.Bomb;
-                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.Bomb);
-                        }
-                        // Disco Ball
-                        else if (preSpawnCell.preSpawnItemID == 400)
-                        {
-                            node.data.type = PieceType.DiscoBall;
-                            node.data.visualPiece = VisualManager.Instance.SpawnPowerup(x, y, PieceType.DiscoBall);
-                        }
+                        node.data.type = PieceType.Powerup;
                     }
-                    else
+                    else if (preSpawnCell.type == ItemType.Collectible)
                     {
-                        node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
+                        node.data.type = PieceType.Collectible;
                     }
+                    else if (preSpawnCell.type == ItemType.Obstacle)
+                    {
+                        node.data.type = PieceType.Obstacle;
+                    }
+                    
+                    node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id);
                 }
                 else
                 {
@@ -123,7 +117,7 @@ public class GridManager : MonoBehaviour
             {
                 int id = GetSafeRandomID(x, y);
                 node = new GridNode(x, y, id);
-                node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id - 1);
+                node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, id);
                 gridData[x, y] = node;
             }
         }
@@ -178,6 +172,9 @@ public class GridManager : MonoBehaviour
 
         Vector2Int start = new Vector2Int(x, y);
         int coreID = gridData[x, y].data.coreID;
+
+        // If its id is 100 or greater it is a powerup or collectible.
+        if (coreID >= 100) return;
 
         List<Vector2Int> horizontalMatchPositions = ScanHorizontal(start, coreID);
         List<Vector2Int> verticalMatchPositions = ScanVertical(start, coreID);
@@ -253,6 +250,7 @@ public class GridManager : MonoBehaviour
                 node.state = NodeState.Matching;
                 extractedData.Add(node.data);
                 node.data = null;
+                CheckAdjacentNodes(node.xPosition, node.yPosition);
 
                 affectedColumns.Add(node.xPosition);
             }
@@ -263,9 +261,16 @@ public class GridManager : MonoBehaviour
         // If it is a powerup, update grid data.
         if (matchToProcess.shape != MatchShape.Match3)
         {
-            PieceData newData = new PieceData(1000, Utils.GetPieceType(matchToProcess.shape));
+            int powerupID = Utils.GetPowerupCoreID(matchToProcess.shape);
+            if (powerupID == -1)
+            {
+                Debug.LogError("Something wrong with powerup ID");
+                return;
+            }
+
+            PieceData newData = new PieceData(powerupID, PieceType.Powerup);
             centerNode.data = newData;
-            centerNode.data.visualPiece = VisualManager.Instance.SpawnPowerup( centerNode.xPosition, centerNode.yPosition, centerNode.data.type);
+            centerNode.data.visualPiece = VisualManager.Instance.SpawnPiece( centerNode.xPosition, centerNode.yPosition, centerNode.data.coreID);
         }
 
         foreach (GridNode node in matchToProcess.matchedNodes)
@@ -355,6 +360,33 @@ public class GridManager : MonoBehaviour
         return new List<Vector2Int>();
     }
 
+    private void CheckAdjacentNodes(int x, int y)
+    {
+        GridNode top = GetNodeAt(x, y + 1);
+        GridNode bottom = GetNodeAt(x, y - 1);
+        GridNode right = GetNodeAt(x + 1, y);
+        GridNode left = GetNodeAt(x - 1, y);
+
+        CheckNode(top);
+        CheckNode(bottom);
+        CheckNode(right);
+        CheckNode(left);
+    }
+
+    private void CheckNode(GridNode node)
+    {
+        if (node == null || node.data == null) return;
+        
+        if (node.data.type == PieceType.Collectible)
+        {
+            ProcessCollectible(node);
+        }
+        else if (node.data.type == PieceType.Obstacle)
+        {
+            ProcessObstacle(node);
+        }
+    }
+
     private void ProcessGravityForColumn(int x)
     {
         int spawnHeight = gridHeight + bufferSize;
@@ -363,11 +395,11 @@ public class GridManager : MonoBehaviour
 
         for (int y = 0; y < gridHeight + bufferSize; y++)
         {
-            GridNode node = GetNodeAt(x, y);
+            GridNode emptyNode = GetNodeAt(x, y);
 
-            if (!node.isPlayable) continue;
+            if (!emptyNode.isPlayable) continue;
 
-            if (node.data == null && node.state == NodeState.Idle)
+            if (emptyNode.data == null && emptyNode.state == NodeState.Idle)
             {
                 bool pieceFound = false;
 
@@ -382,20 +414,20 @@ public class GridManager : MonoBehaviour
                     {
                         pieceFound = true; // Don't spawn from the sky, we have a piece above us!
 
-                        // Only pull it down if it's Idle. If it's already falling, we just wait for it to land!
+                        if (nodeAbove.data.type == PieceType.Obstacle) break;
+
                         if (nodeAbove.state == NodeState.Idle)
                         {
-                            // Move piece down
-                            node.data = nodeAbove.data;
+                            emptyNode.data = nodeAbove.data;
                             nodeAbove.data = null;
-                            node.state = NodeState.Falling;
+                            emptyNode.state = NodeState.Falling;
 
                             // Callback
-                            VisualManager.Instance.MovePiece(node.data.visualPiece, node.xPosition, node.yPosition, delayIndex * delayTime, () =>
+                            VisualManager.Instance.MovePiece(emptyNode.data.visualPiece, emptyNode.xPosition, emptyNode.yPosition, delayIndex * delayTime, () =>
                             {
-                                node.state = NodeState.Idle;
-                                ScanGrid(node.xPosition, node.yPosition);
-                                ProcessGravityForColumn(node.xPosition);
+                                emptyNode.state = NodeState.Idle;
+                                ScanGrid(emptyNode.xPosition, emptyNode.yPosition);
+                                ProcessGravityForColumn(emptyNode.xPosition);
                             });
                         }
                         
@@ -406,17 +438,17 @@ public class GridManager : MonoBehaviour
                 if (!pieceFound)
                 {
                     int newID = Random.Range(1, 6);
-                    node.data = new PieceData(newID);
-                    node.state = NodeState.Falling;
+                    emptyNode.data = new PieceData(newID);
+                    emptyNode.state = NodeState.Falling;
 
-                    node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, spawnHeight, newID - 1);
+                    emptyNode.data.visualPiece = VisualManager.Instance.SpawnPiece(x, spawnHeight, newID);
                     spawnHeight++;
 
-                    VisualManager.Instance.MovePiece(node.data.visualPiece, node.xPosition, node.yPosition, delayIndex * delayTime, () =>
+                    VisualManager.Instance.MovePiece(emptyNode.data.visualPiece, emptyNode.xPosition, emptyNode.yPosition, delayIndex * delayTime, () =>
                     {
-                        node.state = NodeState.Idle;
-                        ScanGrid(node.xPosition, node.yPosition);
-                        ProcessGravityForColumn(node.xPosition);
+                        emptyNode.state = NodeState.Idle;
+                        ScanGrid(emptyNode.xPosition, emptyNode.yPosition);
+                        ProcessGravityForColumn(emptyNode.xPosition);
                     });
                 }
 
@@ -469,6 +501,24 @@ public class GridManager : MonoBehaviour
             return;
         }
 
+        bool aIsObstacle = nodeA.data.type == PieceType.Obstacle;
+        bool bIsObstacle = nodeB.data.type == PieceType.Obstacle;
+
+        // Two obstacles can not switch.
+        if (aIsObstacle && bIsObstacle) return;
+
+        // If one of them is an obstacle, shake other piece/
+        if (aIsObstacle)
+        {
+            VisualManager.Instance.ShakeAtPosition(nodeB.data.visualPiece, swipeDirection);
+            return;
+        }
+        else if (bIsObstacle)
+        {
+            VisualManager.Instance.ShakeAtPosition(nodeA.data.visualPiece, swipeDirection);
+            return;
+        }
+
         // Lock both nodes to prevent concurrent swaps
         nodeA.state = NodeState.Swapping;
         nodeB.state = NodeState.Swapping;
@@ -480,8 +530,8 @@ public class GridManager : MonoBehaviour
         Vector3 logicalPosB = new Vector3(gridPosB.x, gridPosB.y, 0);
 
         // Check piece type, if they are powerups or not
-        bool aIsPowerup = nodeA.data.type != PieceType.Normal;
-        bool bIsPowerup = nodeB.data.type != PieceType.Normal;
+        bool aIsPowerup = nodeA.data.type == PieceType.Powerup;
+        bool bIsPowerup = nodeB.data.type == PieceType.Powerup;
 
         // Swap the data
         PieceData temp = nodeA.data;
@@ -533,33 +583,85 @@ public class GridManager : MonoBehaviour
         GridNode tappedNode = GetNodeAt(gridPosition);
         if (tappedNode.data == null) return;
 
-        if (tappedNode.data.type != PieceType.Normal)
+        if (tappedNode.data.type == PieceType.Powerup)
             ProcessPowerup(tappedNode, Random.Range(1, 6));
     }
 
     private void ProcessPowerup(GridNode node, int targetCoreID = -1)
     {
-        switch (node.data.type)
+        if (node.data == null) return;
+
+        _powerupChainDepth++;
+
+        switch (node.data.coreID)
         {
-            case PieceType.VerticalRocket:
+            case 100:
                 ProcessRocketPowerup(node, Vector2.up);
                 break;
             
-            case PieceType.HorizontalRocket:
+            case 200:
                 ProcessRocketPowerup(node, Vector2.right);
                 break;
 
-            case PieceType.Bomb:
+            case 300:
                 ProcessBombPowerup(node);
                 break;
             
-            case PieceType.DiscoBall:
+            case 400:
                 ProcessDiscoPowerup(node, targetCoreID);
                 break;
             
             default:
                 Debug.Log("Something wrong with powerup processing.");
                 break;
+        }
+
+        _powerupChainDepth--;
+
+        if (_powerupChainDepth == 0)
+        {
+            foreach (int col in _pendingGravityColumns)
+                ProcessGravityForColumn(col);
+            _pendingGravityColumns.Clear();
+        }
+    }
+
+    private void ProcessCollectible(GridNode node)
+    {
+        foreach(LevelObjective objective in levelGoals)
+        {
+            if (objective.itemID == node.data.coreID)
+            {
+                objective.targetCount--;
+                Debug.Log($"Picked up collectible with ID: {node.data.coreID}, still need to collect {objective.targetCount} more.");
+            }
+        }
+        VisualManager.Instance.DestroyPiece(node.data.visualPiece);
+        node.data = null;
+        ProcessGravityForColumn(node.xPosition);
+    }
+
+    private void ProcessObstacle(GridNode node)
+    {
+        VisualManager.Instance.DestroyPiece(node.data.visualPiece);
+        node.data = null;
+        ProcessGravityForColumn(node.xPosition);
+    }
+
+    private void HitNode(GridNode node)
+    {
+        if (node == null || node.data == null) return;
+
+        if (node.data.type == PieceType.Powerup)
+            ProcessPowerup(node);
+        else if (node.data.type == PieceType.Obstacle)
+            ProcessObstacle(node);
+        else if (node.data.type == PieceType.Collectible)
+            ProcessCollectible(node);
+        else
+        {
+            VisualManager.Instance.DestroyPiece(node.data.visualPiece);
+            node.data = null;
         }
     }
 
@@ -575,13 +677,10 @@ public class GridManager : MonoBehaviour
             for (int y = 0; y < gridHeight; y++)
             {
                 GridNode nodeToDestroy = GetNodeAt(centerNode.xPosition, y);
-                if (nodeToDestroy.data == null) continue;
-
-                VisualManager.Instance.DestroyPiece(nodeToDestroy.data.visualPiece);
-                nodeToDestroy.data = null;
+                HitNode(nodeToDestroy);
             }
 
-            ProcessGravityForColumn(centerNode.xPosition);
+            _pendingGravityColumns.Add(centerNode.xPosition);
         }
 
         // Horizontal Rocket
@@ -590,22 +689,22 @@ public class GridManager : MonoBehaviour
             for (int x = 0; x < gridWidth; x++)
             {
                 GridNode nodeToDestroy = GetNodeAt(x, centerNode.yPosition);
-                if (nodeToDestroy.data == null) continue;
-
-                VisualManager.Instance.DestroyPiece(nodeToDestroy.data.visualPiece);
-                nodeToDestroy.data = null;
+                HitNode(nodeToDestroy);
             }
 
             for (int x = 0; x < gridWidth; x++)
-            {
-                ProcessGravityForColumn(x);
-            }
+                _pendingGravityColumns.Add(x);
         }
     }
 
     private void ProcessBombPowerup(GridNode centerNode)
     {
         HashSet<int> affectedColumns = new HashSet<int>();
+
+        // Destroy the bomb itself first so adjacent bombs can't re-trigger it
+        VisualManager.Instance.DestroyPiece(centerNode.data.visualPiece);
+        centerNode.data = null;
+        affectedColumns.Add(centerNode.xPosition);
 
         for (int y = centerNode.yPosition - 1; y <= centerNode.yPosition + 1; y++)
         {
@@ -616,22 +715,17 @@ public class GridManager : MonoBehaviour
                 GridNode nodeToDestroy = gridData[x, y];
                 if (nodeToDestroy.data == null) continue;
 
-                VisualManager.Instance.DestroyPiece(nodeToDestroy.data.visualPiece);
-                nodeToDestroy.data = null;
-
                 affectedColumns.Add(x);
+                HitNode(nodeToDestroy);
             }
         }
 
         foreach (int x in affectedColumns)
-        {
-            ProcessGravityForColumn(x);
-        }
+            _pendingGravityColumns.Add(x);
     }
 
     private void ProcessDiscoPowerup(GridNode centerNode, int targetCoreID)
     {
-        Debug.Log(targetCoreID);
         if (targetCoreID == -1)  return;
 
         HashSet<int> affectedColumns = new HashSet<int>();
@@ -648,17 +742,13 @@ public class GridManager : MonoBehaviour
                 GridNode node = gridData[x, y];
                 if (node.data == null || node.data.coreID != targetCoreID) continue;
 
-                VisualManager.Instance.DestroyPiece(node.data.visualPiece);
-                node.data = null;
-
                 affectedColumns.Add(x);
+                HitNode(node);
             }
         }
 
         foreach (int x in affectedColumns)
-        {
-            ProcessGravityForColumn(x);
-        }
+            _pendingGravityColumns.Add(x);
     }
 
     private bool HasMatch(Vector2Int pos)
@@ -685,6 +775,7 @@ public class GridManager : MonoBehaviour
 
     private GridNode GetNodeAt(int x, int y)
     {
+        if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight + bufferSize) return null;
         return gridData[x, y];
     }
 

@@ -15,6 +15,14 @@ public class VisualManager : MonoBehaviour
     [SerializeField] private GameObject bomb;
     [SerializeField] private GameObject discoBall;
 
+    [Header("Collectibles")]
+    [SerializeField] private GameObject blueCandy;
+    [SerializeField] private GameObject purpleCandy;
+    [SerializeField] private GameObject yellowCandy;
+
+    [Header("Obstacle")]
+    [SerializeField] private GameObject goldenKeyObstacle;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -29,37 +37,66 @@ public class VisualManager : MonoBehaviour
     public GameObject SpawnPiece(int x, int y, int coreID)
     {
         Vector3 spawnPos = new Vector3(x, y);
-        GameObject piece = pieces[coreID];
-        return ObjectPoolManager.SpawnObject(piece, spawnPos, Quaternion.identity);
-    }
+        GameObject obj = GetObjectToSpawn(coreID);
 
-    public GameObject SpawnPowerup(int x, int y, PieceType type)
-    {
-        Vector3 spawnPos = new Vector3(x, y);
-        GameObject powerup = GetPowerupObject(type);
-
-        return ObjectPoolManager.SpawnObject(powerup, spawnPos, Quaternion.identity);
-    }
-
-    private GameObject GetPowerupObject(PieceType type)
-    {
-        switch (type)
+        if (obj == null)
         {
-            case PieceType.VerticalRocket:
+            Debug.LogError("Something wrong with id of the piece, can not get the game object");
+            return null;
+        }
+
+        return ObjectPoolManager.SpawnObject(obj, spawnPos, Quaternion.identity);
+    }
+
+    private GameObject GetObjectToSpawn(int coreID)
+    {
+        switch (coreID)
+        {
+            // Normal pieces
+            case 1:
+                return pieces[0];
+
+            case 2:
+                return pieces[1];
+
+            case 3:
+                return pieces[2];
+
+            case 4:
+                return pieces[3];
+
+            case 5:
+                return pieces[4];
+
+            // Powerups
+            case 100:
                 return verticalRocket;
 
-            case PieceType.HorizontalRocket:
+            case 200:
                 return horizontalRocket;
 
-            case PieceType.Bomb:
+            case 300:
                 return bomb;
 
-            case PieceType.DiscoBall:
+            case 400:
                 return discoBall;
 
-            // SHOULD NOT RUN
+            // Collectibles
+            case 1000:
+                return blueCandy;
+            
+            case 2000:
+                return purpleCandy;
+
+            case 3000:
+                return yellowCandy;
+
+            // Obstacles
+            case 10000:
+                return goldenKeyObstacle;
+
             default:
-                return pieces[0];
+                return null;    
         }
     }
 
@@ -86,14 +123,14 @@ public class VisualManager : MonoBehaviour
         ObjectPoolManager.ReturnObjectToPool(piece);
     }
 
-    public void MovePiece(GameObject piece, int x, int y, float delay, Action onCompleteCallback = null)
+    public void MovePiece(GameObject piece, int x, int y, float startDelay, Action onCompleteCallback = null)
     {
         // Speed and easing combined
         float distance = Vector2.Distance(piece.transform.position, new Vector2(x, y));
         float calculatedDuration = distance * 0.14f;
         float finalDuration = Mathf.Clamp(calculatedDuration, 0.3f, 0.5f);
 
-        TweenSettings settings = new TweenSettings(duration: finalDuration, ease: Ease.InQuad, startDelay: delay);
+        TweenSettings settings = new TweenSettings(duration: finalDuration, ease: Ease.InQuad, startDelay: startDelay);
 
         // Squash and stretch values for landing.
         Vector3 originalScale = piece.transform.localScale;
@@ -107,6 +144,27 @@ public class VisualManager : MonoBehaviour
             // .Chain(Tween.Scale(piece.transform, landScaleSecondPart, duration: .15f))
             // .Chain(Tween.Scale(piece.transform, originalScale, duration: .1f))
             .OnComplete(() => onCompleteCallback?.Invoke());
+    }
+
+    public void ShakeAtPosition(GameObject piece, Vector2 direction)
+    {
+        Vector3 startPosition = piece.transform.position;
+
+        float shakeStrength = .15f;
+        float xMultiplier = direction.x * shakeStrength;
+        float yMultiplier = direction.y * shakeStrength;
+
+        float xPositive = piece.transform.position.x + xMultiplier;
+        float xNegative = piece.transform.position.x + xMultiplier * -1;
+
+        float yPositive = piece.transform.position.y + yMultiplier;
+        float yNegative = piece.transform.position.y + yMultiplier * -1;
+
+
+        Sequence.Create()
+            .Chain(Tween.Position(piece.transform, endValue: new Vector3(xPositive, yPositive), duration: 0.03f))
+            .Chain(Tween.Position(piece.transform, endValue: new Vector3(xNegative, yNegative), duration: 0.06f))
+            .Chain(Tween.Position(piece.transform, endValue: startPosition, duration: .03f));
     }
 
 }
