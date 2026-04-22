@@ -29,12 +29,12 @@ public class Utils
             case MatchShape.Match5Disco:
                 return 400;
 
+            case MatchShape.Match4Propeller:
+                return 500;
+
             // SHOULD NOT RUN
             default:    
                 return -1;
         }
-
-
-    }
-    
+    }  
 }

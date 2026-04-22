@@ -54,7 +54,8 @@ public class LevelBlueprintEditor : EditorWindow
         Color.royalBlue,
         Color.paleVioletRed,
         Color.darkRed,
-        Color.springGreen
+        Color.springGreen,
+        Color.orangeRed
     };
     private static readonly Color[] CollectibleColors =
     {
@@ -187,7 +188,7 @@ public class LevelBlueprintEditor : EditorWindow
             EditorGUILayout.LabelField("Powerup ID:");
             EditorGUILayout.BeginHorizontal();
 
-            for (int i = 1; i <= 4; i++)
+            for (int i = 1; i <= 5; i++)
             {
                 GUI.backgroundColor = PowerupColors[i - 1];
 
@@ -199,7 +200,7 @@ public class LevelBlueprintEditor : EditorWindow
                 if (GUILayout.Button(content, s, GUILayout.Width(45), GUILayout.Height(45)))
                     selectedTileID = i * 100;
 
-                if (i == 4)
+                if (i == 5)
                 {
                     GUIContent eraseContent = new GUIContent("X", $"Erase tile.");
                     GUI.backgroundColor = Color.black;
@@ -338,7 +339,7 @@ public class LevelBlueprintEditor : EditorWindow
     private Texture2D GetPowerupTexture(int id)
     {
         if (powerupTextures == null)
-            powerupTextures = new Texture2D[5];
+            powerupTextures = new Texture2D[6];
 
         if (powerupTextures[id] == null)
             powerupTextures[id] = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Sprites/Powerups/powerup_{id}.png");

@@ -18,6 +18,9 @@ public class GridManager : MonoBehaviour
 
     private int _powerupChainDepth = 0;
     private HashSet<int> _pendingGravityColumns = new HashSet<int>();
+    private bool _isReshuffling = false;
+    private float _nextDeadlockCheckTime = 0f;
+    private const float DeadlockCheckInterval = 0.25f;
 
     private void Awake()
     {
@@ -45,6 +48,20 @@ public class GridManager : MonoBehaviour
     private void Start() 
     {
         InitializeGrid();
+    }
+
+    private void Update()
+    {
+        if (gridData == null || _isReshuffling) return;
+        if (Time.time < _nextDeadlockCheckTime) return;
+        _nextDeadlockCheckTime = Time.time + DeadlockCheckInterval;
+
+        if (!IsBoardSettled()) return;
+
+        if (!HasAnyPossibleMove())
+        {
+            ReshuffleMovablePieces();
+        }
     }
 
     private void InitializeGrid()
@@ -125,7 +142,7 @@ public class GridManager : MonoBehaviour
 
     private int GetSafeRandomID(int x, int y)
     {
-        List<int> forbidden = new List<int>();
+        HashSet<int> forbidden = new HashSet<int>();
 
         // Two left neighbors share the same ID → that ID would complete a horizontal match
         if (x >= 2 &&
@@ -141,6 +158,14 @@ public class GridManager : MonoBehaviour
             gridData[x, y - 1].data.coreID == gridData[x, y - 2].data.coreID)
         {
             forbidden.Add(gridData[x, y - 1].data.coreID);
+        }
+
+        // 2x2 match
+        if (x >= 1 && y >= 1 &&
+            gridData[x - 1, y]?.data != null && gridData[x, y - 1]?.data != null && gridData[x - 1, y - 1]?.data != null &&
+            gridData[x - 1, y].data.coreID == gridData[x, y - 1].data.coreID && gridData[x - 1, y].data.coreID == gridData[x - 1, y - 1].data.coreID)
+        {
+            forbidden.Add(gridData[x - 1, y - 1].data.coreID);
         }
 
         if (forbidden.Count == 0)
@@ -178,8 +203,9 @@ public class GridManager : MonoBehaviour
 
         List<Vector2Int> horizontalMatchPositions = ScanHorizontal(start, coreID);
         List<Vector2Int> verticalMatchPositions = ScanVertical(start, coreID);
+        List<Vector2Int> propellerMatchPositions = ScanLocal2x2Match(start, coreID);
 
-        Match match = GetMatchType(horizontalMatchPositions, verticalMatchPositions, start);
+        Match match = GetMatch(horizontalMatchPositions, verticalMatchPositions, propellerMatchPositions, start);
 
         if (match != null)
         {
@@ -187,54 +213,126 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private Match GetMatchType(List<Vector2Int> horizontal, List<Vector2Int> vertical, Vector2Int startPos)
+    private Match GetMatch(List<Vector2Int> horizontal, List<Vector2Int> vertical, List<Vector2Int> propeller, Vector2Int startPos)
     {
         List<GridNode> matchedNodes = new List<GridNode>();
         GridNode center = GetNodeAt(startPos);
         int coreID = center.data.coreID;
 
-        if (horizontal.Count < 3 && vertical.Count < 3) return null;
+        if (horizontal.Count < 3 && vertical.Count < 3 && propeller.Count == 0) return null;
 
-        foreach (Vector2Int gridPos in horizontal)
-        {
-            GridNode node = GetNodeAt(gridPos);
-            
-            if (!matchedNodes.Contains(node))
-                matchedNodes.Add(GetNodeAt(gridPos));
-        }
-
-        foreach (Vector2Int gridPos in vertical)
-        {
-            GridNode node = GetNodeAt(gridPos);
-            
-            if (!matchedNodes.Contains(node))
-                matchedNodes.Add(GetNodeAt(gridPos));
-        }
+        matchedNodes.Add(center);
 
         if (horizontal.Count >= 5 || vertical.Count >= 5)
         {
-            // Match-5 horizontal or vertical
+            // Match-5+ horizontal or vertical
+            foreach(Vector2Int gridPos in horizontal)
+            {
+                GridNode node = GetNodeAt(gridPos);
+
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
+            foreach(Vector2Int gridPos in vertical)
+            {
+                GridNode node = GetNodeAt(gridPos);
+
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
             return new Match(matchedNodes, center, MatchShape.Match5Disco, coreID);
         }
         else if (horizontal.Count >= 3 && vertical.Count >= 3)
         {
-            // Match-5 T or L shaped
+            // Match-5+ T or L shaped
+            foreach (Vector2Int gridPos in horizontal)
+            {
+                GridNode node = GetNodeAt(gridPos);
+                
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
+            foreach (Vector2Int gridPos in vertical)
+            {
+                GridNode node = GetNodeAt(gridPos);
+                
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
             return new Match(matchedNodes, center, MatchShape.Match5Bomb, coreID);
         }
         else if (horizontal.Count == 4)
         {
             // Match-4 Horizontal
+            foreach (Vector2Int gridPos in horizontal)
+            {
+                GridNode node = GetNodeAt(gridPos);
+                
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
             return new Match(matchedNodes, center, MatchShape.Match4Horizontal, coreID);
         }
         else if (vertical.Count == 4)
         {
-            // Match-4 Vertical 
+            // Match-4 Vertical
+            foreach (Vector2Int gridPos in vertical)
+            {
+                GridNode node = GetNodeAt(gridPos);
+                
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
             return new Match(matchedNodes, center, MatchShape.Match4Vertical, coreID);
         }
-        
-        // Normal Match
-        return new Match(matchedNodes, center, MatchShape.Match3, coreID);
-        
+        else if (propeller.Count == 4)
+        {
+            // Match-4 Propeller
+            foreach (Vector2Int gridPos in propeller)
+            {
+                GridNode node = GetNodeAt(gridPos);
+                
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);
+            }
+
+            return new Match(matchedNodes, center, MatchShape.Match4Propeller, coreID);
+        }
+        else if (horizontal.Count == 3)
+        {
+            // Normal Match
+            foreach(Vector2Int gridPos in horizontal)
+            {
+                GridNode node = GetNodeAt(gridPos);
+
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);   
+            }
+                
+            return new Match(matchedNodes, center, MatchShape.Match3, coreID);
+        }
+        else if (vertical.Count == 3)
+        {
+            // Normal Match
+            foreach(Vector2Int gridPos in vertical)
+            {
+                GridNode node = GetNodeAt(gridPos);
+
+                if (!matchedNodes.Contains(node))
+                    matchedNodes.Add(node);    
+            }
+            
+            return new Match(matchedNodes, center, MatchShape.Match3, coreID);
+        }
+
+        // SHOULD NOT RETURN
+        return null;
     }
 
     private void ProcessMatch(Match matchToProcess)
@@ -256,8 +354,6 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        VisualManager.Instance.DestroyPieces(extractedData);
-
         // If it is a powerup, update grid data.
         if (matchToProcess.shape != MatchShape.Match3)
         {
@@ -268,9 +364,19 @@ public class GridManager : MonoBehaviour
                 return;
             }
 
+            // Synthesize the new powerup immediately so gravity affects it correctly
             PieceData newData = new PieceData(powerupID, PieceType.Powerup);
             centerNode.data = newData;
-            centerNode.data.visualPiece = VisualManager.Instance.SpawnPiece( centerNode.xPosition, centerNode.yPosition, centerNode.data.coreID);
+            centerNode.data.visualPiece = VisualManager.Instance.SpawnPiece(centerNode.xPosition, centerNode.yPosition, centerNode.data.coreID);
+
+            VisualManager.Instance.CombinePieces(extractedData, new Vector3(centerNode.xPosition, centerNode.yPosition), () =>
+            {
+                VisualManager.Instance.DestroyPieces(extractedData);
+            });
+        }
+        else
+        {
+            VisualManager.Instance.DestroyPieces(extractedData);
         }
 
         foreach (GridNode node in matchToProcess.matchedNodes)
@@ -287,6 +393,7 @@ public class GridManager : MonoBehaviour
     private List<Vector2Int> ScanVertical(Vector2Int center, int id)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
+        positions.Add(center);
 
         // Walk up
         for (int y = center.y + 1; y < gridHeight; y++)
@@ -310,11 +417,9 @@ public class GridManager : MonoBehaviour
             positions.Add(new Vector2Int(center.x, y));
         }
 
-        // If there is a at least 2 same piece, add the center and return the list.
-        if (positions.Count >= 2)
-        {
-            positions.Add(center);
-            
+        // If there is a at least 3 same piece, return the list.
+        if (positions.Count >= 3)
+        {  
             return positions;
         }
 
@@ -322,9 +427,66 @@ public class GridManager : MonoBehaviour
         return new List<Vector2Int>();
     }
 
+    private List<Vector2Int> ScanLocal2x2Match(Vector2Int center, int id)
+    {
+        // center position can be top left, top right, bottom left, bottom right.
+        Vector2Int[] potentialOrigins = new Vector2Int[]
+        {
+            new Vector2Int(center.x, center.y), // bottom left
+            new Vector2Int(center.x - 1, center.y), // bottom right
+            new Vector2Int(center.x, center.y - 1), // top left,
+            new Vector2Int(center.x - 1, center.y -1) // top right
+        };
+
+        foreach(Vector2Int origin in potentialOrigins)
+        {
+            int xPos = origin.x;
+            int yPos = origin.y;
+
+            // A 2x2 box needs both origin and top-right corner in main-grid bounds.
+            if (!IsInBounds(xPos, yPos) || !IsInBounds(xPos + 1, yPos + 1)) continue;
+
+            // Grab the nodes of a 2x2 box.
+            GridNode bottomLeft = GetNodeAt(xPos, yPos);
+            GridNode bottomRight = GetNodeAt(xPos + 1, yPos);
+            GridNode topLeft = GetNodeAt(xPos, yPos + 1);
+            GridNode topRight = GetNodeAt(xPos + 1, yPos + 1);
+
+            if (bottomLeft == null || bottomRight == null || topLeft == null || topRight == null)
+                continue;
+
+            if (!bottomLeft.isPlayable || !bottomRight.isPlayable || !topLeft.isPlayable || !topRight.isPlayable)
+                continue;
+
+            if (bottomLeft.data == null || bottomLeft.state != NodeState.Idle ||
+                bottomRight.data == null || bottomRight.state != NodeState.Idle ||
+                topLeft.data == null || topLeft.state != NodeState.Idle ||
+                topRight.data == null || topRight.state != NodeState.Idle)
+            {
+                continue;
+            }
+            
+            if (bottomLeft.data.coreID == id &&
+                bottomRight.data.coreID == id &&
+                topLeft.data.coreID == id &&
+                topRight.data.coreID == id)
+            {
+                return new List<Vector2Int> 
+                {new Vector2Int(xPos, yPos),
+                 new Vector2Int(xPos + 1, yPos),
+                 new Vector2Int(xPos, yPos + 1),
+                 new Vector2Int(xPos + 1, yPos + 1)};
+            }
+        }
+
+        // return an empty list.
+        return new List<Vector2Int>();
+    }
+
     private List<Vector2Int> ScanHorizontal(Vector2Int center, int id)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
+        positions.Add(center);
 
         // Walk right
         for (int x = center.x + 1; x < gridWidth; x++)
@@ -348,11 +510,9 @@ public class GridManager : MonoBehaviour
             positions.Add(new Vector2Int(x, center.y));
         }
 
-        // If there is a at least 2 same piece, add the center and return the list.
-        if (positions.Count >= 2)
-        {
-            positions.Add(center);
-            
+        // If there is a at least 3 same piece, return the list.
+        if (positions.Count >= 3)
+        {   
             return positions;
         }
 
@@ -541,9 +701,17 @@ public class GridManager : MonoBehaviour
         // visualA (from posA) moves to posB; visualB (from posB) moves to posA
         VisualManager.Instance.SwapPieces(visualA, visualB, logicalPosB, logicalPosA, () =>
         {
+            // The swap animation is finished; unlock before evaluating matches.
+            // ScanLocal2x2Match requires Idle nodes, so checking while Swapping would miss valid 2x2 matches.
+            nodeA.state = NodeState.Idle;
+            nodeB.state = NodeState.Idle;
+
             if (!aIsPowerup && !bIsPowerup && !HasMatch(gridPosA) && !HasMatch(gridPosB))
             {
                 // No match formed — swap data back and animate the reversal
+                nodeA.state = NodeState.Swapping;
+                nodeB.state = NodeState.Swapping;
+
                 PieceData swapBack = nodeA.data;
                 nodeA.data = nodeB.data;
                 nodeB.data = swapBack;
@@ -555,9 +723,6 @@ public class GridManager : MonoBehaviour
                 });
                 return;
             }
-
-            nodeA.state = NodeState.Idle;
-            nodeB.state = NodeState.Idle;
 
             // After the swap, slot A holds what was originally B, slot B holds what was originally A.
             // So slot A should be processed as a powerup if B was a powerup, and vice versa.
@@ -611,6 +776,10 @@ public class GridManager : MonoBehaviour
                 ProcessDiscoPowerup(node, targetCoreID);
                 break;
             
+            case 500:
+                ProcessPropellerPowerup(node);
+                break;
+            
             default:
                 Debug.Log("Something wrong with powerup processing.");
                 break;
@@ -633,7 +802,6 @@ public class GridManager : MonoBehaviour
             if (objective.itemID == node.data.coreID)
             {
                 objective.targetCount--;
-                Debug.Log($"Picked up collectible with ID: {node.data.coreID}, still need to collect {objective.targetCount} more.");
             }
         }
         VisualManager.Instance.DestroyPiece(node.data.visualPiece);
@@ -751,6 +919,120 @@ public class GridManager : MonoBehaviour
             _pendingGravityColumns.Add(x);
     }
 
+    private void ProcessPropellerPowerup(GridNode centerNode)
+    {
+        HashSet<int> affectedColumns = new HashSet<int>();
+
+        // Destroy the propeller itself first
+        VisualManager.Instance.DestroyPiece(centerNode.data.visualPiece);
+        centerNode.data = null;
+        affectedColumns.Add(centerNode.xPosition);
+
+        // High priority, collectible.
+        GridNode collectibleNode = GetRandomCollectible();
+
+        // Medium prioriy, obstacle.
+        GridNode obstacleNode = GetRandomObstacle();
+
+        // Low priority, normal piece.
+        GridNode normalNode = GetRandomPiece();
+
+        if (collectibleNode != null)
+        {
+            HitNode(collectibleNode);
+            affectedColumns.Add(collectibleNode.xPosition);
+        }
+        else if (obstacleNode != null)
+        {
+            HitNode(obstacleNode);
+            affectedColumns.Add(obstacleNode.xPosition);
+        }
+        else
+        {
+            HitNode(normalNode);
+            affectedColumns.Add(normalNode.xPosition);
+        }
+
+        foreach (int x in affectedColumns)
+        {
+            ProcessGravityForColumn(x);
+        }
+    }
+
+    private GridNode GetRandomCollectible()
+    {
+        List<GridNode> allCollectibles = new List<GridNode>();
+
+        foreach (GridNode node in gridData)
+        {
+            if (node.data != null &&  node.data.type == PieceType.Collectible)
+                allCollectibles.Add(node);
+        }
+
+        // If empty, return null.
+        if (allCollectibles.Count == 0)
+        {
+            return null;
+        }
+
+        GridNode randomNode = allCollectibles[Random.Range(0, allCollectibles.Count)];
+
+        while (randomNode.state != NodeState.Idle)
+        {
+            randomNode = allCollectibles[Random.Range(0, allCollectibles.Count)];
+        }
+
+        return randomNode;
+    }
+
+    private GridNode GetRandomObstacle()
+    {
+        List<GridNode> allObstacles = new List<GridNode>();
+
+        foreach (GridNode node in gridData)
+        {
+            if (node.data != null && node.data.type == PieceType.Obstacle)
+                allObstacles.Add(node);
+        }
+
+        // If empty, return null.
+        if (allObstacles.Count == 0)
+            return null;
+
+        GridNode randomNode = allObstacles[Random.Range(0, allObstacles.Count)];
+
+        while (randomNode.state != NodeState.Idle)
+        {
+            randomNode = allObstacles[Random.Range(0, allObstacles.Count)];
+        }
+        
+        return randomNode;
+    }
+
+    private GridNode GetRandomPiece()
+    {
+        List<GridNode> allPieces = new List<GridNode>();
+
+        foreach (GridNode node in gridData)
+        {
+            if (node.data != null && node.data.type == PieceType.Normal)
+                allPieces.Add(node);
+        }
+
+        // If empty, return null.
+        if (allPieces.Count == 0)
+            return null;
+
+        GridNode randomNode = allPieces[Random.Range(0, allPieces.Count)];
+
+        while (randomNode.state != NodeState.Idle)
+        {
+            randomNode = allPieces[Random.Range(0, allPieces.Count)];
+        }
+        
+        return randomNode;
+    }
+
     private bool HasMatch(Vector2Int pos)
     {
         return HasMatch(pos.x, pos.y);
@@ -765,7 +1047,199 @@ public class GridManager : MonoBehaviour
         int coreID = gridData[x, y].data.coreID;
         Vector2Int center = new Vector2Int(x, y);
 
-        return ScanHorizontal(center, coreID).Count >= 3 || ScanVertical(center, coreID).Count >= 3;
+        return ScanHorizontal(center, coreID).Count >= 3 || ScanVertical(center, coreID).Count >= 3 || ScanLocal2x2Match(center, coreID).Count == 4;
+    }
+
+    private bool IsBoardSettled()
+    {
+        if (_powerupChainDepth > 0) return false;
+
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                GridNode node = gridData[x, y];
+                if (node == null || !node.isPlayable) continue;
+
+                if (node.data == null) return false;
+                if (node.state != NodeState.Idle) return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool HasAnyPossibleMove()
+    {
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                GridNode node = gridData[x, y];
+                if (node == null || !node.isPlayable || node.data == null) continue;
+
+                // Tapping any powerup is already a valid move in this game.
+                if (node.data.type == PieceType.Powerup) return true;
+
+                if (x + 1 < gridWidth && CanSwapCreateMatch(x, y, x + 1, y)) return true;
+                if (y + 1 < gridHeight && CanSwapCreateMatch(x, y, x, y + 1)) return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool CanSwapCreateMatch(int ax, int ay, int bx, int by)
+    {
+        GridNode a = gridData[ax, ay];
+        GridNode b = gridData[bx, by];
+
+        if (a == null || b == null || !a.isPlayable || !b.isPlayable) return false;
+        if (a.data == null || b.data == null) return false;
+
+        if (a.data.type == PieceType.Obstacle || b.data.type == PieceType.Obstacle) return false;
+        if (a.data.type == PieceType.Collectible || b.data.type == PieceType.Collectible) return false;
+
+        // A swap with a powerup is always a move in the current rules.
+        if (a.data.type == PieceType.Powerup || b.data.type == PieceType.Powerup) return true;
+
+        PieceData temp = a.data;
+        a.data = b.data;
+        b.data = temp;
+
+        bool createsMatch = IsMatchAt(ax, ay) || IsMatchAt(bx, by);
+
+        temp = a.data;
+        a.data = b.data;
+        b.data = temp;
+
+        return createsMatch;
+    }
+
+    private bool IsMatchAt(int x, int y)
+    {
+        GridNode node = gridData[x, y];
+        if (node == null || node.data == null) return false;
+        if (node.data.coreID >= 100) return false;
+
+        int id = node.data.coreID;
+        Vector2Int center = new Vector2Int(x, y);
+
+        int horizontal = 1 + CountDirection(x, y, 1, 0, id) + CountDirection(x, y, -1, 0, id); // 1 is for the start pos
+        if (horizontal >= 3) return true;
+
+        int vertical = 1 + CountDirection(x, y, 0, 1, id) + CountDirection(x, y, 0, -1, id); // 1 is for the start pos
+        if (vertical >= 3) return true;
+
+        return ScanLocal2x2Match(center, id).Count == 4;
+
+    }
+
+    private int CountDirection(int x, int y, int dx, int dy, int id)
+    {
+        int count = 0;
+        int cx = x + dx;
+        int cy = y + dy;
+
+        while (IsInBounds(cx, cy))
+        {
+            GridNode node = gridData[cx, cy];
+            if (node == null || !node.isPlayable || node.data == null || node.data.coreID != id) break;
+
+            count++;
+            cx += dx;
+            cy += dy;
+        }
+
+        return count;
+    }
+
+    private void ReshuffleMovablePieces()
+    {
+        _isReshuffling = true;
+
+        List<GridNode> movableNodes = new List<GridNode>();
+        List<PieceData> pool = new List<PieceData>();
+
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                GridNode node = gridData[x, y];
+                if (node == null || !node.isPlayable || node.data == null) continue;
+
+                // Keep obstacles and collectibles locked to their original cells.
+                if (node.data.type == PieceType.Obstacle || node.data.type == PieceType.Collectible) continue;
+
+                movableNodes.Add(node);
+                pool.Add(node.data);
+            }
+        }
+
+        if (movableNodes.Count <= 1)
+        {
+            _isReshuffling = false;
+            return;
+        }
+
+        bool validShuffle = false;
+        int attempts = 0;
+        const int maxAttempts = 80;
+
+        while (!validShuffle && attempts < maxAttempts)
+        {
+            attempts++;
+            Shuffle(pool);
+
+            for (int i = 0; i < movableNodes.Count; i++)
+            {
+                movableNodes[i].data = pool[i];
+            }
+
+            validShuffle = !BoardHasImmediateMatch() && HasAnyPossibleMove();
+        }
+
+        int finished = 0;
+        int total = movableNodes.Count;
+
+        foreach (GridNode node in movableNodes)
+        {
+            node.state = NodeState.Swapping;
+            VisualManager.Instance.MovePiece(node.data.visualPiece, node.xPosition, node.yPosition, 0f, () =>
+            {
+                node.state = NodeState.Idle;
+                finished++;
+                if (finished == total)
+                {
+                    _isReshuffling = false;
+                    _nextDeadlockCheckTime = Time.time + DeadlockCheckInterval;
+                }
+            });
+        }
+    }
+
+    private bool BoardHasImmediateMatch()
+    {
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                if (IsMatchAt(x, y)) return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void Shuffle(List<PieceData> list)
+    {
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            PieceData temp = list[i];
+            list[i] = list[j];
+            list[j] = temp;
+        }
     }
 
     private GridNode GetNodeAt(Vector2Int index)

@@ -196,7 +196,7 @@ MonoBehaviour:
   playerInputs: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   maximumPressTime: 0.1
   minimumDistance: 0.2
-  maximumTime: 0.25
+  maximumTime: 0.7
   directionThreshold: 0.8
 --- !u!4 &307024127
 Transform:
@@ -1142,6 +1142,7 @@ MonoBehaviour:
   horizontalRocket: {fileID: 9174485760606978658, guid: 979fab0d12faad1428dd66bb28cf121f, type: 3}
   bomb: {fileID: 6808296014636649712, guid: 5ef833d2d26e4844cbb615b85b7cc0aa, type: 3}
   discoBall: {fileID: 2617296120130070546, guid: af885f27f9b91ad448e1987df43e1ec7, type: 3}
+  propeller: {fileID: 3431060800977828432, guid: 1cb680e35ec8b74459215a70352cbf71, type: 3}
   blueCandy: {fileID: 1762537566297782298, guid: 898e09ad822268b47976ee6f0b9f6f61, type: 3}
   purpleCandy: {fileID: 6277137647630543633, guid: 713b7b992b4b58d45810dca12a814fce, type: 3}
   yellowCandy: {fileID: 7285777365827010419, guid: cb2fdd2bb781d4a4687160d8fefa2e77, type: 3}

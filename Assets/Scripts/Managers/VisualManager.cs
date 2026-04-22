@@ -14,6 +14,7 @@ public class VisualManager : MonoBehaviour
     [SerializeField] private GameObject horizontalRocket;
     [SerializeField] private GameObject bomb;
     [SerializeField] private GameObject discoBall;
+    [SerializeField] private GameObject propeller;
 
     [Header("Collectibles")]
     [SerializeField] private GameObject blueCandy;
@@ -81,6 +82,9 @@ public class VisualManager : MonoBehaviour
             case 400:
                 return discoBall;
 
+            case 500:
+                return propeller;
+
             // Collectibles
             case 1000:
                 return blueCandy;
@@ -132,18 +136,30 @@ public class VisualManager : MonoBehaviour
 
         TweenSettings settings = new TweenSettings(duration: finalDuration, ease: Ease.InQuad, startDelay: startDelay);
 
-        // Squash and stretch values for landing.
-        Vector3 originalScale = piece.transform.localScale;
-        Vector3 landScaleFirstPart = new Vector3(originalScale.x * 1.1f, originalScale.y * .9f, originalScale.z);
-        Vector3 landScaleSecondPart = new Vector3(originalScale.x * .9f, originalScale.y * 1.1f, originalScale.z);
-
-        // ADD LANDING ANIMATIONS
         Sequence.Create()
             .Group(Tween.Position(piece.transform, new TweenSettings<Vector3>(new Vector3(x, y), settings)))
-            // .Chain(Tween.Scale(piece.transform, landScaleFirstPart, duration: .15f))
-            // .Chain(Tween.Scale(piece.transform, landScaleSecondPart, duration: .15f))
-            // .Chain(Tween.Scale(piece.transform, originalScale, duration: .1f))
-            .OnComplete(() => onCompleteCallback?.Invoke());
+            .OnComplete(() => 
+            {
+                OnLandAnimation(piece);
+                onCompleteCallback?.Invoke();
+            });
+    }
+
+    public void OnLandAnimation(GameObject piece)
+    {
+        // Squash and stretch values for landing.
+        Vector3 originalScale = piece.transform.localScale;
+        Vector3 landScale = new Vector3(originalScale.x * 1.2f, originalScale.y * .8f, originalScale.z);
+        Vector3 stretchScale = new Vector3(originalScale.x * .9f, originalScale.y * 1.1f, originalScale.z);
+
+        TweenSettings smashDownSettings = new TweenSettings(duration: 0.08f, ease: Ease.OutQuad);
+        TweenSettings stretchSettings = new TweenSettings(duration: 0.1f, ease: Ease.InOutSine);
+        TweenSettings normalSettings = new TweenSettings(duration: 0.08f, ease: Ease.OutBounce);
+
+        Sequence.Create()
+        .Group(Tween.Scale(piece.transform, new TweenSettings<Vector3>(landScale, smashDownSettings)))
+        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(stretchScale, smashDownSettings)))
+        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(originalScale, smashDownSettings)));
     }
 
     public void ShakeAtPosition(GameObject piece, Vector2 direction)
@@ -165,6 +181,31 @@ public class VisualManager : MonoBehaviour
             .Chain(Tween.Position(piece.transform, endValue: new Vector3(xPositive, yPositive), duration: 0.03f))
             .Chain(Tween.Position(piece.transform, endValue: new Vector3(xNegative, yNegative), duration: 0.06f))
             .Chain(Tween.Position(piece.transform, endValue: startPosition, duration: .03f));
+    }
+
+    public void CombinePieces(List<PieceData> pieces, Vector3 center, Action OnCompleteCallback = null)
+    {
+        TweenSettings settings = new TweenSettings(duration: 0.1f, ease: Ease.InQuad);
+
+        for(int i = 0; i < pieces.Count; i++)
+        {
+            GameObject piece = pieces[i].visualPiece;
+            if (piece.transform.position == center) continue;
+
+            /* Storing i value because after all the animations are done it needs to call callback on the last moved piece.
+               if it is not stored and we check i value with count i will always be equal to the length of the list.  */
+            int index = i;
+
+            Sequence.Create()
+            .Group(Tween.Position(piece.transform, new TweenSettings<Vector3>(new Vector3(center.x, center.y), settings)))
+            .OnComplete(() =>
+            {
+                if (index == pieces.Count - 1)
+                {
+                    OnCompleteCallback?.Invoke();
+                }
+            });
+        }
     }
 
 }

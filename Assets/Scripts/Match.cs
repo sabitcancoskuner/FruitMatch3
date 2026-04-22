@@ -5,6 +5,7 @@ public enum MatchShape
     Match3,
     Match4Horizontal,
     Match4Vertical,
+    Match4Propeller,
     Match5Bomb,
     Match5Disco
 }

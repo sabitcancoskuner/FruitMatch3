@@ -51,8 +51,23 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -72,29 +87,11 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
-  - isPlayable: 1
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
@@ -114,10 +111,13 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 3
+    type: 0
   - isPlayable: 1
     preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 3
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
@@ -135,10 +135,10 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 3
+    type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
+    preSpawnItemID: 3
     type: 0
   - isPlayable: 1
     preSpawnItemID: 0
