@@ -53,8 +53,14 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 Assets/
  InputSystem_Actions.cs
  Scripts/Grid/
+  BoardFactory.cs
+  BoardState.cs
+  DeadlockAndHintManager.cs
+  GravityService.cs
   GridNode.cs
+  MatchScanner.cs
   PieceData.cs
+  PowerupProcessor.cs
  Scripts/
   Level Generation/CellSetup.cs
   Managers/

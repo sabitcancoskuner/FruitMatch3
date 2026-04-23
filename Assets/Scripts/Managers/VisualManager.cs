@@ -24,6 +24,8 @@ public class VisualManager : MonoBehaviour
     [Header("Obstacle")]
     [SerializeField] private GameObject goldenKeyObstacle;
 
+    private readonly Dictionary<Transform, Vector3> hintedOriginalScales = new Dictionary<Transform, Vector3>();
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -124,29 +126,52 @@ public class VisualManager : MonoBehaviour
 
     public void DestroyPiece(GameObject piece)
     {
+        if (piece != null)
+        {
+            if (hintedOriginalScales.TryGetValue(piece.transform, out Vector3 originalScale))
+            {
+                piece.transform.localScale = originalScale;
+                hintedOriginalScales.Remove(piece.transform);
+            }
+        }
+
         ObjectPoolManager.ReturnObjectToPool(piece);
     }
 
     public void MovePiece(GameObject piece, int x, int y, float startDelay, Action onCompleteCallback = null)
     {
+        // Sometimes game tries to move inactive objects. Because it can be destroyed by a powerup when falling.
+        if (piece == null || !piece.activeInHierarchy)
+        {
+            onCompleteCallback?.Invoke();
+            return;
+        }
+
         // Speed and easing combined
-        float distance = Vector2.Distance(piece.transform.position, new Vector2(x, y));
+        float distance = Vector2.Distance(piece.transform.position, new Vector3(x, y));
         float calculatedDuration = distance * 0.14f;
         float finalDuration = Mathf.Clamp(calculatedDuration, 0.3f, 0.5f);
 
-        TweenSettings settings = new TweenSettings(duration: finalDuration, ease: Ease.InQuad, startDelay: startDelay);
-
         Sequence.Create()
-            .Group(Tween.Position(piece.transform, new TweenSettings<Vector3>(new Vector3(x, y), settings)))
+            .Group(Tween.Position(piece.transform, endValue: new Vector3(x, y), duration: finalDuration, ease: Ease.InQuad, startDelay: startDelay))
             .OnComplete(() => 
             {
-                OnLandAnimation(piece);
+                if (piece != null && piece.activeInHierarchy)
+                {
+                    OnLandAnimation(piece);
+                }
+
                 onCompleteCallback?.Invoke();
             });
     }
 
     public void OnLandAnimation(GameObject piece)
     {
+        if (piece == null || !piece.activeInHierarchy)
+        {
+            return;
+        }
+
         // Squash and stretch values for landing.
         Vector3 originalScale = piece.transform.localScale;
         Vector3 landScale = new Vector3(originalScale.x * 1.2f, originalScale.y * .8f, originalScale.z);
@@ -158,8 +183,8 @@ public class VisualManager : MonoBehaviour
 
         Sequence.Create()
         .Group(Tween.Scale(piece.transform, new TweenSettings<Vector3>(landScale, smashDownSettings)))
-        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(stretchScale, smashDownSettings)))
-        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(originalScale, smashDownSettings)));
+        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(stretchScale, stretchSettings)))
+        .Chain(Tween.Scale(piece.transform, new TweenSettings<Vector3>(originalScale, normalSettings)));
     }
 
     public void ShakeAtPosition(GameObject piece, Vector2 direction)
@@ -206,6 +231,73 @@ public class VisualManager : MonoBehaviour
                 }
             });
         }
+    }
+
+    public void HintMatch(List<PieceData> pieces, PieceData pieceToSwap)
+    {
+        ClearHint();
+
+        List<PieceData> piecesToAnimate = new List<PieceData>();
+
+        if (pieceToSwap != null)
+            piecesToAnimate.Add(pieceToSwap);
+
+        if (pieces != null)
+        {
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                PieceData piece = pieces[i];
+                if (piece == null) continue;
+                if (piecesToAnimate.Contains(piece)) continue;
+                piecesToAnimate.Add(piece);
+            }
+        }
+
+        if (piecesToAnimate.Count == 0)
+            return;
+
+        for (int i = 0; i < piecesToAnimate.Count; i++)
+        {
+            PieceData piece = piecesToAnimate[i];
+            GameObject pieceVisual = piece.visualPiece;
+
+            if (pieceVisual == null || !pieceVisual.activeInHierarchy)
+                continue;
+
+            Transform target = pieceVisual.transform;
+            if (!hintedOriginalScales.ContainsKey(target))
+                hintedOriginalScales.Add(target, target.localScale);
+
+            bool isSwapPiece = piece == pieceToSwap;
+            float scaleMultiplier = isSwapPiece ? 1.22f : 1.12f;
+            Vector3 originalScale = hintedOriginalScales[target];
+            Vector3 highlightedScale = originalScale * scaleMultiplier;
+
+            Sequence.Create(cycles: 4)
+                .Group(Tween.Scale(target, highlightedScale, 0.2f, Ease.OutQuad))
+                .Chain(Tween.Scale(target, originalScale, 0.16f, Ease.InOutSine));
+        }
+    }
+
+    public void ClearHint()
+    {
+        if (hintedOriginalScales.Count == 0)
+            return;
+
+        foreach (KeyValuePair<Transform, Vector3> pair in hintedOriginalScales)
+        {
+            Transform target = pair.Key;
+            if (target == null) continue;
+
+            Tween.StopAll(onTarget: target);
+
+            if (target.gameObject.activeInHierarchy)
+            {
+                target.localScale = pair.Value;
+            }
+        }
+
+        hintedOriginalScales.Clear();
     }
 
 }
