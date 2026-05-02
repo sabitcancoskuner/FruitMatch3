@@ -52,19 +52,22 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 [sourceFiles]
 Assets/
  InputSystem_Actions.cs
- Scripts/Grid/
-  BoardFactory.cs
-  BoardState.cs
-  DeadlockAndHintManager.cs
-  GravityService.cs
-  GridNode.cs
-  MatchScanner.cs
-  PieceData.cs
-  PowerupProcessor.cs
  Scripts/
+  FPSCounter.cs
+  Grid/
+   BoardFactory.cs
+   BoardState.cs
+   DeadlockAndHintManager.cs
+   GravityService.cs
+   GridNode.cs
+   MatchScanner.cs
+   PieceData.cs
+   PowerupProcessor.cs
   Level Generation/CellSetup.cs
   Managers/
+   AudioManager.cs
    GridManager.cs
+   HapticManager.cs
    InputManager.cs
    LevelManager.cs
    ObjectPoolManager.cs
@@ -72,6 +75,7 @@ Assets/
   Match.cs
   ScriptableObjects/LevelDataSO.cs
   Utils.cs
+  VFXAutoPool.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 
 [metadataReferences]
@@ -132,7 +136,6 @@ Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
  UnityEditor.VideoModule.dll
  UnityEditor.XRModule.dll
  UnityEngine.AccessibilityModule.dll
- UnityEngine.AdaptivePerformanceModule.dll
  UnityEngine.AIModule.dll
  UnityEngine.AndroidJNIModule.dll
  UnityEngine.AnimationModule.dll
@@ -372,6 +375,8 @@ Library/ScriptAssemblies/
  Unity.2D.Tooling.Editor.dll
  Unity.Burst.dll
  Unity.Burst.Editor.dll
+ Unity.Cinemachine.dll
+ Unity.Cinemachine.Editor.dll
  Unity.Collections.dll
  Unity.Collections.Editor.dll
  Unity.InputSystem.dll
@@ -401,7 +406,10 @@ Library/ScriptAssemblies/
  Unity.RenderPipelines.Universal.Shaders.dll
  Unity.Rider.Editor.dll
  Unity.Searcher.Editor.dll
+ Unity.Settings.Editor.dll
  Unity.ShaderGraph.Editor.dll
+ Unity.Splines.dll
+ Unity.Splines.Editor.dll
  Unity.TextMeshPro.dll
  Unity.TextMeshPro.Editor.dll
  Unity.Timeline.dll
@@ -419,6 +427,7 @@ Library/ScriptAssemblies/
  UnityEditor.UI.Analytics.dll
  UnityEditor.UI.dll
  UnityEngine.UI.dll
+ Vibration.dll
 Temp/bin/Debug/PrimeTween.Installer.dll
 
 [analyzerReferences]

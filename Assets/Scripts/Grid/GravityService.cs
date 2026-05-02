@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public struct FallInstruction
@@ -15,11 +14,17 @@ public class GravityService
 {
     public List<FallInstruction> CalculateGravityForColumn(BoardState board, int x)
     {
+        return CalculateGravityForColumn(board, x, board.Height + board.BufferSize, true);
+    }
+
+    public List<FallInstruction> CalculateGravityForColumn(BoardState board, int x, int maxYExclusive, bool allowSpawn)
+    {
         List<FallInstruction> instructions = new List<FallInstruction>();
 
-        int spawnHeight = board.Height + board.BufferSize;
+        int clampedMaxY = Mathf.Clamp(maxYExclusive, 0, board.Height + board.BufferSize);
+        int spawnHeight = clampedMaxY;
 
-        for (int y = 0; y < board.Height + board.BufferSize; y++)
+        for (int y = 0; y < clampedMaxY; y++)
         {
             GridNode emptyNode = board.GetNodeAt(x, y);
 
@@ -29,7 +34,7 @@ public class GravityService
             {
                 bool pieceFound = false;
 
-                for (int i = y + 1; i < board.Height + board.BufferSize; i++)
+                for (int i = y + 1; i < clampedMaxY; i++)
                 {
                     GridNode nodeAbove = board.GetNodeAt(x, i);
 
@@ -64,7 +69,7 @@ public class GravityService
                     }
                 }
 
-                if (!pieceFound)
+                if (!pieceFound && allowSpawn)
                 {
                     int newID = Random.Range(1, 6);
                     emptyNode.data = new PieceData(newID);

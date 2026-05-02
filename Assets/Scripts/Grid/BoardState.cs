@@ -75,5 +75,15 @@ public class BoardState
         return IsInBounds(pos.x, pos.y);
     }
 
+    public bool IsInPlayableBounds(int x, int y)
+    {
+        return x >= 0 && x < Width && y >= 0 && y < Height;
+    }
+
+    public bool IsInPlayableBounds(Vector2Int pos)
+    {
+        return IsInPlayableBounds(pos.x, pos.y);
+    }
+
 
 }

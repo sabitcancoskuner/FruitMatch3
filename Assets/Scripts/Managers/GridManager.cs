@@ -1,5 +1,7 @@
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
+using System.Linq;
+using PrimeTween;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -121,9 +123,6 @@ public class GridManager : MonoBehaviour
         ResetHintTimer();
 
         GridNode tappedNode = board.GetNodeAt(gridPosition);
-        if (tappedNode == null || tappedNode.data == null) return;
-        if (tappedNode.data.type != PieceType.Powerup) return;
-
         ProcessPowerup(tappedNode);
     }
 
@@ -138,14 +137,77 @@ public class GridManager : MonoBehaviour
             powerupCoreID = centerNode.data.coreID;
         }
 
-        // Ensure center node is destroyed so it doesn't stay as a Powerup node and doesn't infinitely recurse
-        ConsumePowerupNode(centerNode);
-
-        // 1. Ask the Brain WHAT to destroy
         HashSet<GridNode> targetsToDestroy = powerupProcessor.ProcessPowerup(board, centerNode, targetCoreID, powerupCoreID);
 
-        // 2. Tell the Body to ACTUALLY destroy them
-        ResolvePowerupTargets(targetsToDestroy);
+        foreach (GridNode target in targetsToDestroy)
+        {
+            // Only lock nodes that actually have a piece; empty nodes must stay Idle so gravity can refill them.
+            if (target != null && target.data != null && target.state == NodeState.Idle)
+                target.state = NodeState.Matching;
+        }
+
+        GameObject visualPiece = centerNode.data.visualPiece;
+
+        centerNode.state = NodeState.Matching;
+        centerNode.data = null;
+        centerNode.state = NodeState.Idle;
+
+        // Vertical Rocket
+        if (powerupCoreID == 100)
+        {
+            VisualManager.Instance.PlayRocketEffect(visualPiece, Vector2.up, () =>
+            {
+                ResolvePowerupTargetsForRocket(centerNode, true, targetsToDestroy);
+            });
+        }
+        // Horizontal Rocket
+        else if (powerupCoreID == 200)
+        {
+            VisualManager.Instance.PlayRocketEffect(visualPiece, Vector2.right, () =>
+            {
+                ResolvePowerupTargetsForRocket(centerNode, false, targetsToDestroy);
+            });
+        }
+        // Bomb
+        else if (powerupCoreID == 300)
+        {
+            VisualManager.Instance.PlayBombEffect(visualPiece, () =>
+            {
+                ResolvePowerupTargets(targetsToDestroy);
+            });
+        }
+        // Disco Ball
+        else if (powerupCoreID == 400)
+        {
+            HashSet<GridNode> targetsWithoutCenter = new HashSet<GridNode>(targetsToDestroy);
+            targetsWithoutCenter.Remove(centerNode);
+
+            VisualManager.Instance.PlayDiscoBallEffect(visualPiece, targetsWithoutCenter, (targetNode) => ResolvePowerupTarget(targetNode), () =>
+            {
+                ConsumePowerupNode(centerNode);
+                _pendingGravityColumns.Add(centerNode.xPosition);
+                ProcessGravityForColumn(centerNode.xPosition);
+            });
+
+        }
+        // Propeller
+        else if (powerupCoreID == 500)
+        {
+            GridNode targetNode = targetsToDestroy.Last();
+
+            if (targetNode != null && visualPiece != null)
+            {
+                Vector3 targetPos = new Vector3(targetNode.xPosition, targetNode.yPosition);
+                VisualManager.Instance.PlayPropellerEffect(visualPiece, targetPos, () =>
+                {
+                   ResolvePowerupTargets(targetsToDestroy); 
+                });
+            }
+            else
+            {
+                ResolvePowerupTargets(targetsToDestroy); // Failsafe, later change this to target change.
+            }
+        }
     }
 
     private void ProcessPowerupCombo(GridNode centerNode, GridNode nodeA, GridNode nodeB, int coreIDA, int coreIDB)
@@ -175,21 +237,20 @@ public class GridManager : MonoBehaviour
         node.state = NodeState.Idle;
     }
 
-    private void ResolvePowerupTargets(HashSet<GridNode> targetsToDestroy)
+    private void ResolvePowerupTarget(GridNode targetToDestroy)
     {
         _powerupChainDepth++;
 
         try
         {
-            if (targetsToDestroy == null) return;
+            if (targetToDestroy == null) return;
 
-            foreach (GridNode target in targetsToDestroy)
-            {
-                if (target == null) continue;
+            _pendingGravityColumns.Add(targetToDestroy.xPosition);
 
-                _pendingGravityColumns.Add(target.xPosition);
-                HitNode(target);
-            }
+            if (targetToDestroy.state == NodeState.Matching)
+                targetToDestroy.state = NodeState.Idle;
+            
+            HitNode(targetToDestroy);
         }
         finally
         {
@@ -199,12 +260,73 @@ public class GridManager : MonoBehaviour
             {
                 foreach (int x in _pendingGravityColumns)
                 {
-                    // ProcessGravityForColumn(x);
+                    ProcessGravityForColumn(x);
                 }
 
                 _pendingGravityColumns.Clear();
             }
         }
+    }
+
+    private void ResolvePowerupTargets(HashSet<GridNode> targetsToDestroy)
+    {
+        foreach(GridNode target in targetsToDestroy)
+        {
+            ResolvePowerupTarget(target);
+        }
+    }
+
+    private void ResolvePowerupTargetsForRocket(GridNode centerNode, bool isVertical, HashSet<GridNode> targetsToDestroy)
+    {
+         _powerupChainDepth++;
+
+        float timePerTile = 0.05f; 
+        float maxDelay = 0f;
+
+        foreach (GridNode target in targetsToDestroy)
+        {
+            if (target == null) continue;
+
+            // Always mark the column for gravity, even if this specific target
+            // was already cleared (for example, the rocket center node).
+            _pendingGravityColumns.Add(target.xPosition);
+
+            int distance = isVertical ? Mathf.Abs(target.yPosition - centerNode.yPosition) : Mathf.Abs(target.xPosition - centerNode.xPosition);
+
+            float delay = distance * timePerTile + timePerTile;
+            if (delay > maxDelay) maxDelay = delay;
+
+            Tween.Delay(delay, () =>
+            {
+                if (target == null) return;
+
+                // Overlapping rockets can clear this node earlier; keep it Idle so gravity can process it.
+                if (target.data == null)
+                {
+                    if (target.state == NodeState.Matching)
+                        target.state = NodeState.Idle;
+                    return;
+                }
+
+                if (target.state == NodeState.Matching) target.state = NodeState.Idle;
+                
+                HitNode(target);
+            });
+        }
+
+        Tween.Delay(maxDelay + 0.05f, () =>
+        {
+            _powerupChainDepth--; 
+            
+            if (_powerupChainDepth == 0)
+            {
+                foreach (int x in _pendingGravityColumns)
+                {
+                    ProcessGravityForColumn(x);
+                }
+                _pendingGravityColumns.Clear();
+            }
+        });
     }
 
     private void HitNode(GridNode node)
@@ -218,11 +340,6 @@ public class GridManager : MonoBehaviour
         {
             PieceData powerupData = node.data;
             int powerupCoreID = powerupData.coreID;
-
-            node.state = NodeState.Matching;
-            VisualManager.Instance.DestroyPiece(powerupData.visualPiece);
-            node.data = null;
-            node.state = NodeState.Idle;
 
             // CHAIN REACTION! A powerup hit another powerup.
             ProcessPowerup(node, -1, powerupCoreID);
@@ -294,6 +411,7 @@ public class GridManager : MonoBehaviour
         }
         else
         {
+            VisualManager.Instance.PlayMatchPopEffect(extractedData);
             VisualManager.Instance.DestroyPieces(extractedData);
         }
 
@@ -427,7 +545,7 @@ public class GridManager : MonoBehaviour
         Vector2Int gridPosA = Utils.CalculateGridLocation(swipeStartPosition);
         Vector2Int gridPosB = Utils.CalculateGridLocation(swipeStartPosition + swipeDirection);
 
-        if (!board.IsInBounds(gridPosA) || !board.IsInBounds(gridPosB)) 
+        if (!board.IsInPlayableBounds(gridPosA) || !board.IsInPlayableBounds(gridPosB)) 
         {
             Debug.Log("Out of bounds");
             return;
@@ -549,7 +667,6 @@ public class GridManager : MonoBehaviour
                 }
             }
         });
-
     }
 
     private void TriggerBoardReshuffle()

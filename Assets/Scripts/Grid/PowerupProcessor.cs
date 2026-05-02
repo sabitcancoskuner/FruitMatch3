@@ -13,7 +13,7 @@ public class PowerupProcessor
         {
             if (node.data == null) return targets;
             powerupCoreID = node.data.coreID;
-        }
+        }   
 
         switch (powerupCoreID)
         {
@@ -49,16 +49,48 @@ public class PowerupProcessor
     {
         HashSet<GridNode> targets = new HashSet<GridNode>();
         targets.Add(centerNode);
-        if (targetCoreID == -1)  return targets;
+        if (targetCoreID == -1)
+        {
+            int mostFound = 0;
+            int id = 0;
+
+            for (int i = 0; i < 6; i++)
+            {
+                int total = 0;
+                for (int y = 0; y < board.Height; y++)
+                {
+                    for (int x = 0; x < board.Width; x++)
+                    {   
+                        GridNode node = board.GetNodeAt(x, y);
+                        if (node == null || node.state != NodeState.Idle) continue;
+                        
+                        PieceData nodeData = board.GetNodeDataAt(x, y);
+                        if (nodeData == null || nodeData.coreID != i) continue;
+                        
+                        total++;
+                    }
+                }
+                if (total > mostFound)
+                {
+                    mostFound = total;
+                    id = i;
+                }
+            }
+
+            targetCoreID = id;
+        }
 
         for (int y = 0; y < board.Height; y++)
         {
             for (int x = 0; x < board.Width; x++)
-            {
+            {   
+                GridNode node = board.GetNodeAt(x, y);
+                if (node == null || node.state != NodeState.Idle) continue;
+
                 PieceData nodeData = board.GetNodeDataAt(x, y);
                 if (nodeData == null || nodeData.coreID != targetCoreID) continue;
                 
-                targets.Add(board.GetNodeAt(x, y));
+                targets.Add(node);
             }
         }
 

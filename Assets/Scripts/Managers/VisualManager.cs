@@ -24,7 +24,13 @@ public class VisualManager : MonoBehaviour
     [Header("Obstacle")]
     [SerializeField] private GameObject goldenKeyObstacle;
 
+    [Header("Visual Effects")]
+    [SerializeField] private GameObject popVFX;
+    [SerializeField] private GameObject bombVFX;
+    [SerializeField] private LineRenderer discoVFX;
+
     private readonly Dictionary<Transform, Vector3> hintedOriginalScales = new Dictionary<Transform, Vector3>();
+    private readonly Dictionary<Transform, Sequence> hintedSequences = new Dictionary<Transform, Sequence>();
 
     private void Awake()
     {
@@ -35,6 +41,8 @@ public class VisualManager : MonoBehaviour
         }
 
         Instance = this;
+
+        PrimeTweenConfig.SetTweensCapacity(1000);
     }
 
     public GameObject SpawnPiece(int x, int y, int coreID)
@@ -108,6 +116,11 @@ public class VisualManager : MonoBehaviour
 
     public void SwapPieces(GameObject pieceA, GameObject pieceB, Vector3 targetA, Vector3 targetB, Action onCompleteCallback = null)
     {
+        // Vibrate if its a phone.
+        #if UNITY_ANDROID
+            HapticManager.Instance.VibrateLight();
+        #endif
+
         TweenSettings settings = new TweenSettings(duration: 0.1f, ease: Ease.InOutCubic);
 
         Sequence.Create()
@@ -128,10 +141,22 @@ public class VisualManager : MonoBehaviour
     {
         if (piece != null)
         {
-            if (hintedOriginalScales.TryGetValue(piece.transform, out Vector3 originalScale))
+            Transform pieceTransform = piece.transform;
+
+            if (hintedSequences.TryGetValue(pieceTransform, out Sequence hintSequence))
             {
-                piece.transform.localScale = originalScale;
-                hintedOriginalScales.Remove(piece.transform);
+                if (hintSequence.isAlive)
+                {
+                    hintSequence.Stop();
+                }
+
+                hintedSequences.Remove(pieceTransform);
+            }
+
+            if (hintedOriginalScales.TryGetValue(pieceTransform, out Vector3 originalScale))
+            {
+                pieceTransform.localScale = originalScale;
+                hintedOriginalScales.Remove(pieceTransform);
             }
         }
 
@@ -210,7 +235,7 @@ public class VisualManager : MonoBehaviour
 
     public void CombinePieces(List<PieceData> pieces, Vector3 center, Action OnCompleteCallback = null)
     {
-        TweenSettings settings = new TweenSettings(duration: 0.1f, ease: Ease.InQuad);
+        TweenSettings settings = new TweenSettings(duration: 0.08f, ease: Ease.InQuad);
 
         for(int i = 0; i < pieces.Count; i++)
         {
@@ -228,6 +253,7 @@ public class VisualManager : MonoBehaviour
                 if (index == pieces.Count - 1)
                 {
                     OnCompleteCallback?.Invoke();
+                    AudioManager.Instance.PlaySFX(AudioManager.Instance.createPowerupSound);
                 }
             });
         }
@@ -273,23 +299,31 @@ public class VisualManager : MonoBehaviour
             Vector3 originalScale = hintedOriginalScales[target];
             Vector3 highlightedScale = originalScale * scaleMultiplier;
 
-            Sequence.Create(cycles: 4)
+            Sequence hintSequence = Sequence.Create(cycles: 4)
                 .Group(Tween.Scale(target, highlightedScale, 0.2f, Ease.OutQuad))
                 .Chain(Tween.Scale(target, originalScale, 0.16f, Ease.InOutSine));
+
+            hintedSequences[target] = hintSequence;
         }
     }
 
     public void ClearHint()
     {
-        if (hintedOriginalScales.Count == 0)
+        if (hintedOriginalScales.Count == 0 && hintedSequences.Count == 0)
             return;
+
+        foreach (Sequence hintSequence in hintedSequences.Values)
+        {
+            if (hintSequence.isAlive)
+            {
+                hintSequence.Stop();
+            }
+        }
 
         foreach (KeyValuePair<Transform, Vector3> pair in hintedOriginalScales)
         {
             Transform target = pair.Key;
             if (target == null) continue;
-
-            Tween.StopAll(onTarget: target);
 
             if (target.gameObject.activeInHierarchy)
             {
@@ -297,7 +331,251 @@ public class VisualManager : MonoBehaviour
             }
         }
 
+        hintedSequences.Clear();
         hintedOriginalScales.Clear();
+    }
+
+    public void PlayMatchPopEffect(List<PieceData> pieces)
+    {
+        foreach (PieceData piece in pieces)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.matchPopSound);
+            GameObject vfx = ObjectPoolManager.SpawnObject(popVFX, piece.visualPiece.transform.position, Quaternion.identity, PoolType.VFX);
+            var vfxMain = vfx.GetComponent<ParticleSystem>().main;
+            vfxMain.startColor = GetPieceColor(piece.coreID);
+        }
+    }
+
+    public void PlayRocketEffect(GameObject piece, Vector2 direction, Action OnLaunchReadyCallback)
+    {
+        Transform half1 = piece.transform.GetChild(0);
+        Transform half2 = piece.transform.GetChild(1);
+
+        TrailRenderer trail1 = half1.GetComponentInChildren<TrailRenderer>();
+        Vector3 firstHalfScale = half1.localScale;
+        Vector3 firstHalfSquashScale = new Vector3(firstHalfScale.x * 1.3f, firstHalfScale.y * 0.7f);
+        Vector3 firstHalfStretchScale = new Vector3(firstHalfScale.x * 0.7f, firstHalfScale.y * 1.4f);
+
+        TrailRenderer trail2 = half2.GetComponentInChildren<TrailRenderer>();
+        Vector3 secondHalfScale = half2.localScale;
+        Vector3 secondHalfSquashScale = new Vector3(secondHalfScale.x * 1.3f, secondHalfScale.y * 0.7f);
+        Vector3 secondHalfStretchScale = new Vector3(secondHalfScale.x * 0.7f, secondHalfScale.y * 1.4f);
+
+        if (trail1 != null) trail1.emitting = false;
+        if (trail2 != null) trail2.emitting = false;
+
+        Sequence rocketSeq = Sequence.Create();
+
+        if (direction == Vector2.up)
+        {
+            rocketSeq.Group(Tween.PositionY(half1, piece.transform.position.y - 0.2f, 0.15f, Ease.OutQuad))
+                     .Group(Tween.PositionY(half2, piece.transform.position.y + 0.2f, 0.15f, Ease.OutQuad));
+        }
+        else
+        {
+            rocketSeq.Group(Tween.PositionX(half1, piece.transform.position.x - 0.2f, 0.15f, Ease.OutQuad))
+                     .Group(Tween.PositionX(half2, piece.transform.position.x + 0.2f, 0.15f, Ease.OutQuad));
+        }
+
+        rocketSeq.Group(Tween.Scale(half1, firstHalfSquashScale, 0.15f, Ease.OutQuad))
+                 .Group(Tween.Scale(half2, secondHalfSquashScale, 0.15f, Ease.OutQuad));
+
+        rocketSeq.ChainCallback(() =>
+        {
+           AudioManager.Instance.PlaySFX(AudioManager.Instance.rocketPowerupSound);
+           HapticManager.Instance.VibrateMedium();
+
+           if (trail1 != null) trail1.emitting = true;
+           if (trail2 != null) trail2.emitting = true;
+
+           OnLaunchReadyCallback?.Invoke(); 
+        });
+
+        rocketSeq.Group(Tween.Scale(half1, firstHalfStretchScale, 0.1f))
+                 .Group(Tween.Scale(half2, secondHalfStretchScale, 0.1f));
+
+        if (direction == Vector2.up)
+        {
+            rocketSeq.Group(Tween.PositionY(half1, piece.transform.position.y + 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionY(half2, piece.transform.position.y - 10f, 0.4f, Ease.InCubic));
+        }
+        else
+        {
+            rocketSeq.Group(Tween.PositionX(half1, piece.transform.position.x + 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionX(half2, piece.transform.position.x - 10f, 0.4f, Ease.InCubic));
+        }
+
+        rocketSeq.OnComplete(() =>
+        {
+            half1.localScale = firstHalfScale;
+            half1.localPosition = Vector3.zero;
+
+            half2.localScale = secondHalfScale;
+            half2.localPosition = Vector3.zero;
+
+            if (trail1 != null)
+            { 
+                trail1.emitting = false;
+                trail1.Clear();
+            }
+            if (trail2 != null)
+            {
+                trail2.emitting = false;
+                trail2.Clear();
+            }
+
+            DestroyPiece(piece);
+        });
+    }
+
+    public void PlayBombEffect(GameObject piece, Action OnCompleteCallback)
+    {
+        Transform bomb = piece.transform;
+        Vector3 normalScale = bomb.localScale;
+        Vector3 squashScale = new Vector3(normalScale.x * 1.3f, normalScale.y * 0.7f);
+        Vector3 swellScale = new Vector3(normalScale.x * 1.4f, normalScale.y * 1.4f);
+
+        Sequence.Create()
+        .Group(Tween.Scale(bomb, squashScale, 0.12f, Ease.OutQuad))
+        .Chain(Tween.Scale(bomb, swellScale, 0.08f, Ease.InQuad))
+        .OnComplete(() =>
+        {
+            bomb.localScale = normalScale;
+            ObjectPoolManager.SpawnObject(bombVFX, piece.transform.position, Quaternion.identity, PoolType.VFX);
+            HapticManager.Instance.VibrateMedium();
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.bombPowerupSound);
+
+            DestroyPiece(piece);
+            OnCompleteCallback?.Invoke();            
+        });
+    }
+
+    public void PlayPropellerEffect(GameObject piece, Vector3 endPos, Action OnCompleteCallback)
+    {
+        AudioSource vfxSource = AudioManager.Instance.PlaySFX(AudioManager.Instance.propellerPowerupSound);
+        HapticManager.Instance.VibrateLight();
+
+        SpriteRenderer renderer = piece.GetComponent<SpriteRenderer>();
+        renderer.sortingOrder = 1;
+
+        Transform visual = piece.transform;
+        Vector3 startPos = visual.position;
+        Vector3 liftPos = startPos + new Vector3(0, 0.2f, 0);
+
+        Vector3 midPoint = (liftPos + endPos) / 2f;
+
+        float randomOffsetX = UnityEngine.Random.Range(-1.5f, -1.5f);
+        float randomOffsetY = UnityEngine.Random.Range(0.5f, 1.5f);
+        Vector3 controlPoint = new Vector3(midPoint.x + randomOffsetX, midPoint.y + randomOffsetY);
+
+        Sequence.Create()
+        .Group(Tween.Position(visual, liftPos, 0.2f, Ease.OutQuad))
+        .Chain(Tween.Custom(0f, 1f, duration: 0.4f, ease: Ease.InQuad, onValueChange: t =>
+        {
+            visual.position = GetBezierPoint(t, liftPos, controlPoint, endPos);
+        }))
+        .OnComplete(() =>
+        {
+            vfxSource.Stop();
+            renderer.sortingOrder = 0;
+            DestroyPiece(piece);
+            OnCompleteCallback?.Invoke();
+        });
+    }
+
+    public void PlayDiscoBallEffect(GameObject piece, HashSet<GridNode> targets, Action<GridNode> OnExplosionReadyCallback, Action OnCompleteCallback = null)
+    {
+        Vector3 centerPosition = piece.transform.position;
+
+        List<LineRenderer> activeLasers = new List<LineRenderer>();
+
+        float timeBetweenLasers = 0.08f;
+        float laserFlightDuration = 0.2f; 
+        int delayIndex = 0;
+
+        foreach (GridNode target in targets)
+        {
+            LineRenderer laser = ObjectPoolManager.SpawnObject(discoVFX, centerPosition, Quaternion.identity, PoolType.VFX);
+            
+            laser.SetPosition(0, centerPosition);
+            laser.SetPosition(1, centerPosition); 
+
+            Vector3 targetPos = new Vector3(target.xPosition, target.yPosition);
+            
+            float currentDelay = delayIndex * timeBetweenLasers;
+
+            Tween.Custom(0f, 1f, duration: laserFlightDuration, startDelay: currentDelay, onValueChange: t =>
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.discoballPowerupLaserSound);
+                if (laser != null)
+                {
+                    laser.SetPosition(1, Vector3.Lerp(centerPosition, targetPos, t));
+                }
+            })
+            .OnComplete(() =>
+            {
+                OnExplosionReadyCallback(target);   
+                HapticManager.Instance.VibrateLight();
+                if (laser != null)
+                {
+                    // Optional: You can make the laser width shrink to 0 to make it "fizzle" out
+                    Tween.Custom(laser.startWidth, 0f, 0.15f, onValueChange: width => 
+                    {
+                        if (laser != null)
+                        {
+                            laser.startWidth = width;
+                            laser.endWidth = width;
+                        }
+                    })
+                    .OnComplete(() => Destroy(laser.gameObject)); // Destroy AFTER the linger
+                }
+            });
+
+            delayIndex++;
+        }
+        
+        float totalSequenceTime = (targets.Count * timeBetweenLasers) + laserFlightDuration;
+        
+        Sequence.Create()
+        .ChainDelay(totalSequenceTime)
+        .OnComplete(() =>
+        {
+            DestroyPiece(piece);
+            OnCompleteCallback?.Invoke();
+        });
+    }
+
+    private Vector3 GetBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
+    {
+        float u = 1 - t;
+        float tt = t * t;
+        float uu = u * u;
+        
+        return (uu * p0) + (2 * u * t * p1) + (tt * p2);
+    }
+
+    private Color GetPieceColor(int coreID)
+    {
+        switch (coreID)
+        {
+            case 1:
+                return Color.orange;
+
+            case 2:
+                return Color.lightBlue;
+            
+            case 3:
+                return Color.green;
+            
+            case 4:
+                return Color.purple;
+
+            case 5:
+                return Color.red;
+
+            default:
+                return Color.white;
+        }
     }
 
 }

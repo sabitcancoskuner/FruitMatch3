@@ -5,6 +5,8 @@ public class MatchScanner
 {
     public Match GetMatchAt(BoardState board, int x, int y)
     {
+        if (!board.IsInPlayableBounds(x, y)) return null;
+
         GridNode node = board.GetNodeAt(x, y);
         PieceData nodeData = board.GetNodeDataAt(x, y);
         if (node == null) return null;
@@ -28,6 +30,8 @@ public class MatchScanner
     
     public bool HasMatchAt(BoardState board, int x, int y)
     {
+        if (!board.IsInPlayableBounds(x, y)) return false;
+
         GridNode node = board.GetNodeAt(x, y);
         if (node == null) return false;
         if (node.data == null) return false;
@@ -55,7 +59,7 @@ public class MatchScanner
         for (int y = center.y + 1; y < board.Height; y++)
         {
             GridNode next = board.GetNodeAt(center.x, y);
-            if (!next.isPlayable) break;
+            if (!next.isPlayable || !board.IsInPlayableBounds(center.x, y)) break;
 
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
@@ -66,7 +70,7 @@ public class MatchScanner
         for (int y = center.y - 1; y >= 0; y--)
         {
             GridNode next = board.GetNodeAt(center.x, y);
-            if (!next.isPlayable) break;
+            if (!next.isPlayable || !board.IsInPlayableBounds(center.x, y)) break;
 
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
@@ -92,7 +96,7 @@ public class MatchScanner
         for (int x = center.x + 1; x < board.Width; x++)
         {
             GridNode next = board.GetNodeAt(x, center.y);
-            if (!next.isPlayable) break;
+            if (!next.isPlayable || !board.IsInPlayableBounds(x, center.y)) break;
 
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
@@ -103,7 +107,7 @@ public class MatchScanner
         for (int x = center.x - 1; x >= 0; x--)
         {
             GridNode next = board.GetNodeAt(x, center.y);
-            if (!next.isPlayable) break;
+            if (!next.isPlayable || !board.IsInPlayableBounds(x, center.y)) break;
 
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
@@ -144,6 +148,12 @@ public class MatchScanner
 
             if (bottomLeft == null || bottomRight == null || topLeft == null || topRight == null)
                 continue;
+            
+            if (!board.IsInPlayableBounds(xPos, yPos) || !board.IsInPlayableBounds(xPos + 1, yPos) ||
+                !board.IsInPlayableBounds(xPos, yPos + 1) || !board.IsInPlayableBounds(xPos + 1, yPos + 1))
+            {
+                continue;
+            }
 
             if (!bottomLeft.isPlayable || !bottomRight.isPlayable || !topLeft.isPlayable || !topRight.isPlayable)
                 continue;
@@ -293,25 +303,6 @@ public class MatchScanner
 
         // SHOULD NOT RETURN
         return null;
-    }
-
-    private int CountDirection(BoardState board, int x, int y, int dx, int dy, int id)
-    {
-        int count = 0;
-        int cx = x + dx;
-        int cy = y + dy;
-
-        while (board.IsInBounds(cx, cy))
-        {
-            GridNode node = board.GetNodeAt(cx, cy);
-            if (node == null || !node.isPlayable || node.data == null || node.data.coreID != id) break;
-
-            count++;
-            cx += dx;
-            cy += dy;
-        }
-
-        return count;
     }
 
     public bool BoardHasImmediateMatch(BoardState board)

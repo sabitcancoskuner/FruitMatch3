@@ -1,12 +1,11 @@
 using System.Collections.Generic;
-using NUnit.Framework;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public enum PoolType
 {
-    GameObjects
+    GameObjects,
+    VFX
 }
 
 public class ObjectPoolManager : MonoBehaviour
@@ -16,6 +15,7 @@ public class ObjectPoolManager : MonoBehaviour
     private GameObject emptyHolder;
     
     private static GameObject gameObjectsEmpty;
+    private static GameObject vfxEmpty;
     
     private static Dictionary<GameObject, ObjectPool<GameObject>> objectPools;
     private static Dictionary<GameObject, GameObject> cloneToPrefabMap;
@@ -36,6 +36,9 @@ public class ObjectPoolManager : MonoBehaviour
 
         gameObjectsEmpty = new GameObject("Game Objects");
         gameObjectsEmpty.transform.SetParent(emptyHolder.transform);
+
+        vfxEmpty = new GameObject("Visual Effects");
+        vfxEmpty.transform.SetParent(emptyHolder.transform);
 
         if (addToDontDestroyOnLoad)
             DontDestroyOnLoad(gameObjectsEmpty.transform.root);
@@ -116,6 +119,9 @@ public class ObjectPoolManager : MonoBehaviour
         {
             case PoolType.GameObjects:
                 return gameObjectsEmpty;
+
+            case PoolType.VFX:
+                return vfxEmpty;
 
             default:
                 return null;
