@@ -19,7 +19,9 @@ public class InputManager : MonoBehaviour
     [Header("Press Settings")]
     [SerializeField] private float maximumPressTime = 1f;
     private float pressStartTime;
+    private Vector2 pressStartPosition;
     private float pressEndTime;
+    private Vector2 pressEndPosition;
     private Vector2 pressWorldPosition;
 
     [Header("Swipe Settings")]
@@ -118,13 +120,15 @@ public class InputManager : MonoBehaviour
         Vector2 screenPosition = touchPosition.ReadValue<Vector2>();
         pressWorldPosition  = Utils.ScreenToWorld(screenPosition);
         pressStartTime = Time.time;
+        pressStartPosition = screenPosition;
     }
 
     private void EndTouchPress(InputAction.CallbackContext ctx)
     {
         pressEndTime = Time.time;
+        pressEndPosition = touchPosition.ReadValue<Vector2>();
 
-        if ((pressEndTime - pressStartTime) <= maximumPressTime)
+        if ((pressEndTime - pressStartTime) <= maximumPressTime && Vector2.Distance(pressStartPosition, pressEndPosition) <= 0.2f)
         {
             OnScreenTapped?.Invoke(Utils.CalculateGridLocation(pressWorldPosition));
         }

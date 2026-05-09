@@ -1,6 +1,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public static class PowerupIDs
+{
+    public const int RocketVertical = 100;
+    public const int RocketHorizontal = 200;
+    public const int Bomb = 300;
+    public const int DiscoBall = 400;
+    public const int Propeller = 500;
+}
+
 public class PowerupProcessor
 {
     public HashSet<GridNode> ProcessPowerup(BoardState board, GridNode node, int targetCoreID = -1, int forcedPowerupCoreID = -1)
@@ -17,23 +26,23 @@ public class PowerupProcessor
 
         switch (powerupCoreID)
         {
-            case 100:
+            case PowerupIDs.RocketVertical:
                 targets.UnionWith(GetRocketTargets(board, node, Vector2.up));
                 break;
             
-            case 200:
+            case PowerupIDs.RocketHorizontal:
                 targets.UnionWith(GetRocketTargets(board, node, Vector2.right));
                 break;
 
-            case 300:
+            case PowerupIDs.Bomb:
                 targets.UnionWith(GetBombTargets(board, node));
                 break;
             
-            case 400:
+            case PowerupIDs.DiscoBall:
                 targets.UnionWith(GetDiscoTargets(board, node, targetCoreID));
                 break;
             
-            case 500:
+            case PowerupIDs.Propeller:
                 targets.UnionWith(ReturnPropellerTargets(board, node));
                 break;
             
@@ -54,7 +63,7 @@ public class PowerupProcessor
             int mostFound = 0;
             int id = 0;
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 1; i < 6; i++)
             {
                 int total = 0;
                 for (int y = 0; y < board.Height; y++)
@@ -156,87 +165,33 @@ public class PowerupProcessor
         return targets;
     }
 
-    private GridNode GetRandomCollectible(BoardState board)
-    {
-        List<GridNode> allCollectibles = new List<GridNode>();
-
-        for (int x = 0; x < board.Width; x++)
-        {
-            for (int y = 0; y < board.Height; y++)
-            {
-                GridNode node = board.GetNodeAt(x, y);
-                PieceData nodeData = board.GetNodeDataAt(x, y);
-                if (node.state == NodeState.Idle && nodeData != null && nodeData.type == PieceType.Collectible)
-                    allCollectibles.Add(node);
-            }
-        }
-
-        // If empty, return null.
-        if (allCollectibles.Count == 0)
-        {
-            return null;
-        }
-
-        GridNode randomNode = allCollectibles[Random.Range(0, allCollectibles.Count)];
-
-        return randomNode;
-    }
-
-    private GridNode GetRandomObstacle(BoardState board)
-    {
-        List<GridNode> allObstacles = new List<GridNode>();
-
-        for (int x = 0; x < board.Width; x++)
-        {
-            for (int y = 0; y < board.Height; y++)
-            {
-                GridNode node = board.GetNodeAt(x, y);
-                PieceData nodeData = board.GetNodeDataAt(x, y);
-                if (node.state == NodeState.Idle && nodeData != null && nodeData.type == PieceType.Obstacle)
-                    allObstacles.Add(node);
-            }
-        }
-
-        // If empty, return null.
-        if (allObstacles.Count == 0)
-            return null;
-
-        GridNode randomNode = allObstacles[Random.Range(0, allObstacles.Count)];
-        
-        return randomNode;
-    }
-
-    private GridNode GetRandomPiece(BoardState board)
-    {
-        List<GridNode> allPieces = new List<GridNode>();
-
-        for (int x = 0; x < board.Width; x++)
-        {
-            for (int y = 0; y < board.Height; y++)
-            {
-                GridNode node = board.GetNodeAt(x, y);
-                PieceData nodeData = board.GetNodeDataAt(x, y);
-                if (node.state == NodeState.Idle && nodeData != null && nodeData.type == PieceType.Normal)
-                    allPieces.Add(node);
-            }
-        }
-
-        // If empty, return null.
-        if (allPieces.Count == 0)
-            return null;
-
-        GridNode randomNode = allPieces[Random.Range(0, allPieces.Count)];
-
-        return randomNode;
-    }
-
     private GridNode GetPropellerDestination(BoardState board)
     {
-        GridNode c = GetRandomCollectible(board);
-        if (c != null) return c;
-        GridNode o = GetRandomObstacle(board);
-        if (o != null) return o;
-        return GetRandomPiece(board);
+        List<GridNode> collectibles = new List<GridNode>();
+        List<GridNode> obstacles = new List<GridNode>();
+        List<GridNode> normalPieces = new List<GridNode>();
+
+        for (int y = 0; y < board.Height; y++)
+        {
+            for (int x = 0; x < board.Width; x++)
+            {
+                GridNode node = board.GetNodeAt(x, y);
+                PieceData data = board.GetNodeDataAt(x, y);
+
+                if (node == null || data == null || node.state != NodeState.Idle) continue;
+
+                if (data.type == PieceType.Collectible) collectibles.Add(node);
+                else if (data.type == PieceType.Obstacle) obstacles.Add(node);
+                else if (data.type == PieceType.Normal) normalPieces.Add(node);
+            }
+        }
+
+        // Collectible -> Obstacle -> Normal Piece
+        if (collectibles.Count > 0) return collectibles[Random.Range(0, collectibles.Count)];
+        if (obstacles.Count > 0) return obstacles[Random.Range(0, obstacles.Count)];
+        if (normalPieces.Count > 0) return normalPieces[Random.Range(0, normalPieces.Count)];
+
+        return null;
     }
 
     private int GetRandomNormalCoreID(BoardState board, int exclude = -1)
@@ -263,18 +218,21 @@ public class PowerupProcessor
         }
     }
 
-    public HashSet<GridNode> ProcessCombo(BoardState board, GridNode center, int coreIDA, int coreIDB)
+    public (HashSet<GridNode> targets, List<GridNode> primary, List<GridNode> secondary) ProcessCombo(BoardState board, GridNode center, int coreIDA, int coreIDB)
     {
         HashSet<GridNode> targets = new HashSet<GridNode>();
+        List<GridNode> primaryVisualTargets = new List<GridNode>();
+        List<GridNode> secondaryVisualTargets = new List<GridNode>();
 
-        bool aIsRocket = coreIDA == 100 || coreIDA == 200;
-        bool bIsRocket = coreIDB == 100 || coreIDB == 200;
-        bool aIsPropeller = coreIDA == 500;
-        bool bIsPropeller = coreIDB == 500;
-        bool aIsBomb = coreIDA == 300;
-        bool bIsBomb = coreIDB == 300;
-        bool aIsDisco = coreIDA == 400;
-        bool bIsDisco = coreIDB == 400;
+        bool aIsRocket = coreIDA == PowerupIDs.RocketVertical || coreIDA == PowerupIDs.RocketHorizontal;
+        bool bIsRocket = coreIDB == PowerupIDs.RocketVertical || coreIDB == PowerupIDs.RocketHorizontal;
+        bool aIsPropeller = coreIDA == PowerupIDs.Propeller;
+        bool bIsPropeller = coreIDB == PowerupIDs.Propeller;
+        bool aIsBomb = coreIDA == PowerupIDs.Bomb;
+        bool bIsBomb = coreIDB == PowerupIDs.Bomb;
+        bool aIsDisco = coreIDA == PowerupIDs.DiscoBall;
+        bool bIsDisco = coreIDB == PowerupIDs.DiscoBall;
+
 
         if (aIsRocket && bIsRocket)
         {
@@ -284,10 +242,11 @@ public class PowerupProcessor
         else if ((aIsRocket && bIsPropeller) || (aIsPropeller && bIsRocket))
         {
             int rocketID = aIsRocket ? coreIDA : coreIDB;
-            Vector2 rocketDir = rocketID == 100 ? Vector2.up : Vector2.right;
+            Vector2 rocketDir = rocketID == PowerupIDs.RocketVertical ? Vector2.up : Vector2.right;
             GridNode dest = GetPropellerDestination(board);
             if (dest != null)
             {
+                secondaryVisualTargets.Add(dest);
                 targets.Add(dest);
                 targets.UnionWith(GetRocketTargets(board, dest, rocketDir));
             }
@@ -309,19 +268,22 @@ public class PowerupProcessor
         {
             List<GridNode> normalPieces = new List<GridNode>();
             for (int y = 0; y < board.Height; y++)
+            {
                 for (int x = 0; x < board.Width; x++)
                 {
                     GridNode node = board.GetNodeAt(x, y);
                     PieceData data = board.GetNodeDataAt(x, y);
-                    if (node != null && data != null && data.type == PieceType.Normal)
+                    if (node != null && node.state == NodeState.Idle && data != null && data.type == PieceType.Normal)
                         normalPieces.Add(node);
                 }
+            }
 
             Shuffle(normalPieces);
             int count = Mathf.Min(12, normalPieces.Count);
             for (int i = 0; i < count; i++)
             {
-                Vector2 rocketDir = Random.Range(0, 100) >= 50 ? Vector2.up : Vector2.right; 
+                primaryVisualTargets.Add(normalPieces[i]);
+                Vector2 rocketDir = Random.value >= .5f ? Vector2.up : Vector2.right; 
                 targets.UnionWith(GetRocketTargets(board, normalPieces[i], rocketDir));
             }
         }
@@ -330,14 +292,22 @@ public class PowerupProcessor
             for (int i = 0; i < 3; i++)
             {
                 GridNode dest = GetPropellerDestination(board);
-                if (dest != null) targets.Add(dest);
+                if (dest != null)
+                {
+                    primaryVisualTargets.Add(dest);
+                    targets.Add(dest);
+                }
             }
         }
         else if ((aIsPropeller && bIsBomb) || (aIsBomb && bIsPropeller))
         {
             GridNode dest = GetPropellerDestination(board);
             if (dest != null)
+            {
+                targets.Add(dest);
+                secondaryVisualTargets.Add(dest);
                 targets.UnionWith(GetBombTargets(board, dest));
+            }
         }
         else if ((aIsPropeller && bIsDisco) || (aIsDisco && bIsPropeller))
         {
@@ -351,9 +321,16 @@ public class PowerupProcessor
                         GridNode node = board.GetNodeAt(x, y);
                         PieceData data = board.GetNodeDataAt(x, y);
                         if (node == null || data == null || data.coreID != targetColor) continue;
+
+                        primaryVisualTargets.Add(node);
                         targets.Add(node);
+
                         GridNode propDest = GetPropellerDestination(board);
-                        if (propDest != null) targets.Add(propDest);
+                        if (propDest != null)
+                        {
+                            secondaryVisualTargets.Add(propDest);
+                            targets.Add(propDest);
+                        }
                     }
                 }
             }
@@ -369,17 +346,24 @@ public class PowerupProcessor
         }
         else if ((aIsBomb && bIsDisco) || (aIsDisco && bIsBomb))
         {
-            int targetColor = GetRandomNormalCoreID(board);
-            if (targetColor != -1)
+            List<GridNode> normalPieces = new List<GridNode>();
+            for (int y = 0; y < board.Height; y++)
             {
-                for (int y = 0; y < board.Height; y++)
-                    for (int x = 0; x < board.Width; x++)
-                    {
-                        GridNode node = board.GetNodeAt(x, y);
-                        PieceData data = board.GetNodeDataAt(x, y);
-                        if (node == null || data == null || data.coreID != targetColor) continue;
-                        targets.UnionWith(GetBombTargets(board, node));
-                    }
+                for (int x = 0; x < board.Width; x++)
+                {
+                    GridNode node = board.GetNodeAt(x, y);
+                    PieceData data = board.GetNodeDataAt(x, y);
+                    if (node != null && node.state == NodeState.Idle && data != null && data.type == PieceType.Normal)
+                        normalPieces.Add(node);
+                }
+            }
+            
+            Shuffle(normalPieces);
+            int count = Mathf.Min(12, normalPieces.Count);
+            for (int i = 0; i < count; i++)
+            {
+                primaryVisualTargets.Add(normalPieces[i]);
+                targets.UnionWith(GetBombTargets(board, normalPieces[i]));
             }
         }
         else if (aIsDisco && bIsDisco)
@@ -398,6 +382,6 @@ public class PowerupProcessor
                 }
         }
 
-        return targets;
+        return (targets, primaryVisualTargets, secondaryVisualTargets);
     }
 }

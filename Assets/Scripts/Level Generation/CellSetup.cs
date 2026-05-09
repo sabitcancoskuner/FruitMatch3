@@ -16,11 +16,3 @@ public class CellSetup
     public int preSpawnItemID = 0;
     public ItemType type;
 }
-
-[System.Serializable]
-public class LevelObjective
-
-{
-    public int itemID;
-    public int targetCount;
-}

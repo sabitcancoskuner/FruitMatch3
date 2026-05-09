@@ -27,6 +27,7 @@ public class VisualManager : MonoBehaviour
     [Header("Visual Effects")]
     [SerializeField] private GameObject popVFX;
     [SerializeField] private GameObject bombVFX;
+    [SerializeField] private Transform rocketVFX;
     [SerializeField] private LineRenderer discoVFX;
 
     private readonly Dictionary<Transform, Vector3> hintedOriginalScales = new Dictionary<Transform, Vector3>();
@@ -43,9 +44,10 @@ public class VisualManager : MonoBehaviour
         Instance = this;
 
         PrimeTweenConfig.SetTweensCapacity(1000);
+        PrimeTweenConfig.warnEndValueEqualsCurrent = false;
     }
 
-    public GameObject SpawnPiece(int x, int y, int coreID)
+    public GameObject  SpawnPiece(int x, int y, int coreID)
     {
         Vector3 spawnPos = new Vector3(x, y);
         GameObject obj = GetObjectToSpawn(coreID);
@@ -57,6 +59,18 @@ public class VisualManager : MonoBehaviour
         }
 
         return ObjectPoolManager.SpawnObject(obj, spawnPos, Quaternion.identity);
+    }
+
+    public Sprite GetSpriteForCoreID(int coreID)
+    {
+        GameObject source = GetObjectToSpawn(coreID);
+        if (source == null) return null;
+
+        SpriteRenderer renderer = source.GetComponent<SpriteRenderer>();
+        if (renderer != null) return renderer.sprite;
+
+        SpriteRenderer childRenderer = source.GetComponentInChildren<SpriteRenderer>(true);
+        return childRenderer != null ? childRenderer.sprite : null;
     }
 
     private GameObject GetObjectToSpawn(int coreID)
@@ -80,19 +94,19 @@ public class VisualManager : MonoBehaviour
                 return pieces[4];
 
             // Powerups
-            case 100:
+            case PowerupIDs.RocketVertical:
                 return verticalRocket;
 
-            case 200:
+            case PowerupIDs.RocketHorizontal:
                 return horizontalRocket;
 
-            case 300:
+            case PowerupIDs.Bomb:
                 return bomb;
 
-            case 400:
+            case PowerupIDs.DiscoBall:
                 return discoBall;
 
-            case 500:
+            case PowerupIDs.Propeller:
                 return propeller;
 
             // Collectibles
@@ -116,10 +130,7 @@ public class VisualManager : MonoBehaviour
 
     public void SwapPieces(GameObject pieceA, GameObject pieceB, Vector3 targetA, Vector3 targetB, Action onCompleteCallback = null)
     {
-        // Vibrate if its a phone.
-        #if UNITY_ANDROID
-            HapticManager.Instance.VibrateLight();
-        #endif
+        HapticManager.Instance.VibrateLight();
 
         TweenSettings settings = new TweenSettings(duration: 0.1f, ease: Ease.InOutCubic);
 
@@ -351,18 +362,15 @@ public class VisualManager : MonoBehaviour
         Transform half1 = piece.transform.GetChild(0);
         Transform half2 = piece.transform.GetChild(1);
 
-        TrailRenderer trail1 = half1.GetComponentInChildren<TrailRenderer>();
         Vector3 firstHalfScale = half1.localScale;
         Vector3 firstHalfSquashScale = new Vector3(firstHalfScale.x * 1.3f, firstHalfScale.y * 0.7f);
         Vector3 firstHalfStretchScale = new Vector3(firstHalfScale.x * 0.7f, firstHalfScale.y * 1.4f);
+        Transform trail1 = ObjectPoolManager.SpawnObject(rocketVFX, half1.transform.position, Quaternion.identity, PoolType.VFX);
 
-        TrailRenderer trail2 = half2.GetComponentInChildren<TrailRenderer>();
         Vector3 secondHalfScale = half2.localScale;
         Vector3 secondHalfSquashScale = new Vector3(secondHalfScale.x * 1.3f, secondHalfScale.y * 0.7f);
         Vector3 secondHalfStretchScale = new Vector3(secondHalfScale.x * 0.7f, secondHalfScale.y * 1.4f);
-
-        if (trail1 != null) trail1.emitting = false;
-        if (trail2 != null) trail2.emitting = false;
+        Transform trail2 = ObjectPoolManager.SpawnObject(rocketVFX, half2.transform.position, Quaternion.identity, PoolType.VFX);
 
         Sequence rocketSeq = Sequence.Create();
 
@@ -385,9 +393,6 @@ public class VisualManager : MonoBehaviour
            AudioManager.Instance.PlaySFX(AudioManager.Instance.rocketPowerupSound);
            HapticManager.Instance.VibrateMedium();
 
-           if (trail1 != null) trail1.emitting = true;
-           if (trail2 != null) trail2.emitting = true;
-
            OnLaunchReadyCallback?.Invoke(); 
         });
 
@@ -397,12 +402,16 @@ public class VisualManager : MonoBehaviour
         if (direction == Vector2.up)
         {
             rocketSeq.Group(Tween.PositionY(half1, piece.transform.position.y + 10f, 0.4f, Ease.InCubic))
-                     .Group(Tween.PositionY(half2, piece.transform.position.y - 10f, 0.4f, Ease.InCubic));
+                     .Group(Tween.PositionY(trail1, piece.transform.position.y + 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionY(half2, piece.transform.position.y - 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionY(trail2, piece.transform.position.y - 10f, 0.4f, Ease.InCubic));
         }
         else
         {
             rocketSeq.Group(Tween.PositionX(half1, piece.transform.position.x + 10f, 0.4f, Ease.InCubic))
-                     .Group(Tween.PositionX(half2, piece.transform.position.x - 10f, 0.4f, Ease.InCubic));
+                     .Group(Tween.PositionX(trail1, piece.transform.position.x + 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionX(half2, piece.transform.position.x - 10f, 0.4f, Ease.InCubic))
+                     .Group(Tween.PositionX(trail2, piece.transform.position.x - 10f, 0.4f, Ease.InCubic));
         }
 
         rocketSeq.OnComplete(() =>
@@ -413,16 +422,8 @@ public class VisualManager : MonoBehaviour
             half2.localScale = secondHalfScale;
             half2.localPosition = Vector3.zero;
 
-            if (trail1 != null)
-            { 
-                trail1.emitting = false;
-                trail1.Clear();
-            }
-            if (trail2 != null)
-            {
-                trail2.emitting = false;
-                trail2.Clear();
-            }
+            ObjectPoolManager.ReturnObjectToPool(trail1.gameObject, PoolType.VFX);
+            ObjectPoolManager.ReturnObjectToPool(trail2.gameObject, PoolType.VFX);
 
             DestroyPiece(piece);
         });
@@ -527,7 +528,7 @@ public class VisualManager : MonoBehaviour
                             laser.endWidth = width;
                         }
                     })
-                    .OnComplete(() => Destroy(laser.gameObject)); // Destroy AFTER the linger
+                    .OnComplete(() => ObjectPoolManager.ReturnObjectToPool(laser.gameObject)); // Destroy AFTER the linger
                 }
             });
 
@@ -543,6 +544,350 @@ public class VisualManager : MonoBehaviour
             DestroyPiece(piece);
             OnCompleteCallback?.Invoke();
         });
+    }
+
+    public void PlayCrossRocketCombo(GameObject rocketA, GameObject rocketB, Vector3 mergePos, Action OnExplosionReady)
+    {
+        // Merge
+        Sequence.Create()
+            .Group(Tween.Position(rocketA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(rocketB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(rocketA);
+                DestroyPiece(rocketB);
+
+                GameObject crossVertical = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.RocketVertical);
+                GameObject crossHorizontal = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.RocketHorizontal);
+                
+                int readyCount = 0;
+                Action checkReady = () =>
+                {
+                    readyCount++;
+                    if (readyCount == 2)
+                    {
+                        OnExplosionReady?.Invoke();
+                    }
+                };
+
+                PlayRocketEffect(crossVertical, Vector2.up, checkReady);
+                PlayRocketEffect(crossHorizontal, Vector2.right, checkReady);
+            });
+    }
+
+    public void PlayPropellerDeliveryCombo(GameObject pieceA, GameObject pieceB, Vector3 mergePos, Vector3 targetPos, int deliverID, Action OnDeliveredCallback = null)
+    {
+        // Merge
+        Sequence.Create()
+            .Group(Tween.Position(pieceA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(pieceB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(pieceA);
+                DestroyPiece(pieceB);
+
+                GameObject propeller = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.Propeller);
+                GameObject payload = SpawnPiece((int)mergePos.x, (int)mergePos.y, deliverID);
+
+                Vector3 liftPos = mergePos + new Vector3(0, 0.2f);
+                Vector3 midPoint = (liftPos + targetPos) / 2f;
+                float randomOffsetX = UnityEngine.Random.Range(-1.5f, 1.5f);
+                float randomOffsetY = UnityEngine.Random.Range(0.5f, 1.5f);
+                Vector3 controlPoint = new Vector3(midPoint.x + randomOffsetX, midPoint.y + randomOffsetY);
+                AudioSource comboFlightSource = AudioManager.Instance.PlaySFX(AudioManager.Instance.propellerPowerupSound);
+                HapticManager.Instance.VibrateLight();
+
+                Sequence.Create()
+                    .Group(Tween.Position(propeller.transform, liftPos, 0.2f, Ease.OutQuad))
+                    .Group(Tween.Position(payload.transform, liftPos, 0.2f, Ease.OutQuad))
+                    .Chain(Tween.Custom(0f, 1f, duration: 0.4f, ease: Ease.InQuad, onValueChange: t =>
+                    {
+                        Vector3 currentPos = GetBezierPoint(t, liftPos, controlPoint, targetPos);
+                        if (propeller != null) propeller.transform.position = currentPos;
+                        if (payload != null) payload.transform.position = currentPos;
+                    }))
+                    .OnComplete(() =>
+                    {
+                        if (comboFlightSource != null)
+                        {
+                            comboFlightSource.Stop();
+                        }
+
+                        DestroyPiece(propeller);
+
+                        if (deliverID == PowerupIDs.RocketVertical)
+                            PlayRocketEffect(payload, Vector2.up, () => OnDeliveredCallback?.Invoke());
+                        else if (deliverID == PowerupIDs.RocketHorizontal)
+                            PlayRocketEffect(payload, Vector2.right, () => OnDeliveredCallback?.Invoke());
+                        else if (deliverID == PowerupIDs.Bomb)
+                            PlayBombEffect(payload, () => OnDeliveredCallback?.Invoke());
+                    });
+            });
+    }
+
+    public void PlayTriplePropellerCombo(GameObject pieceA, GameObject pieceB, Vector3 mergePos, List<GridNode> flightDestinations, Action OnFlightEnd = null)
+    {
+        Sequence.Create()
+            .Group(Tween.Position(pieceA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(pieceB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+               DestroyPiece(pieceA);
+               DestroyPiece(pieceB);
+
+               AudioSource comboFlightSource = null;
+               if (flightDestinations != null && flightDestinations.Count > 0)
+               {
+                    comboFlightSource = AudioManager.Instance.PlaySFX(AudioManager.Instance.propellerPowerupSound);
+                    HapticManager.Instance.VibrateLight();
+               }
+
+               int readyCount = 0;
+               Action CheckReady = () =>
+               {
+                    readyCount++;
+                    if (readyCount == flightDestinations.Count)
+                    {
+                        if (comboFlightSource != null)
+                        {
+                            comboFlightSource.Stop();
+                        }
+
+                        OnFlightEnd?.Invoke();
+                    }
+               };
+
+               foreach (GridNode target in flightDestinations)
+                {
+                    GameObject propeller = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.Propeller);
+                    
+                    Vector3 targetPos = new Vector3(target.xPosition, target.yPosition);
+                    Vector3 liftPos = mergePos + new Vector3(0, 0.2f, 0);
+                    Vector3 midPoint = (liftPos + targetPos) / 2f;
+                    
+                    float randomOffsetX = UnityEngine.Random.Range(-1.5f, 1.5f);
+                    float randomOffsetY = UnityEngine.Random.Range(0.5f, 1.5f);
+                    Vector3 controlPoint = new Vector3(midPoint.x + randomOffsetX, midPoint.y + randomOffsetY);
+
+                    Sequence.Create()
+                        .Group(Tween.Position(propeller.transform, liftPos, 0.2f, ease: Ease.OutQuad))
+                        .Chain(Tween.Custom(0f, 1f, duration: 0.4f, ease: Ease.InQuad, onValueChange: t =>
+                        {
+                            propeller.transform.position = GetBezierPoint(t, liftPos, controlPoint, targetPos);
+                        }))
+                        .OnComplete(() =>
+                        {
+                            DestroyPiece(propeller); 
+                            CheckReady();
+                        });
+                }
+            });
+    }
+
+    public void PlayGiantRocketCombo(GameObject pieceA, GameObject pieceB, Vector3 mergePos, Action OnExplosionReady = null)
+    {
+        Sequence.Create()
+            .Group(Tween.Position(pieceA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(pieceB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(pieceA);
+                DestroyPiece(pieceB);
+
+                List<GameObject> rockets = new List<GameObject>();
+
+                // Vertical rockets
+                rockets.Add(SpawnPiece((int)mergePos.x + 1, (int)mergePos.y, PowerupIDs.RocketVertical));
+                rockets.Add(SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.RocketVertical));
+                rockets.Add(SpawnPiece((int)mergePos.x - 1, (int)mergePos.y, PowerupIDs.RocketVertical));
+
+                // Horizontal Rockets
+                rockets.Add(SpawnPiece((int)mergePos.x, (int)mergePos.y + 1, PowerupIDs.RocketHorizontal));
+                rockets.Add(SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.RocketHorizontal));
+                rockets.Add(SpawnPiece((int)mergePos.x, (int)mergePos.y - 1, PowerupIDs.RocketHorizontal));
+
+                // counter for firing them at the same time
+                int readyCount = 0;
+                Action CheckReady = () =>
+                {
+                    readyCount++;
+                    if (readyCount == rockets.Count)
+                        OnExplosionReady?.Invoke();  
+                };
+
+                // Fire vertical rockets.
+                PlayRocketEffect(rockets[0], Vector2.up, CheckReady);
+                PlayRocketEffect(rockets[1], Vector2.up, CheckReady);
+                PlayRocketEffect(rockets[2], Vector2.up, CheckReady);
+
+                // Fire horizontal rockets.
+                PlayRocketEffect(rockets[3], Vector2.right, CheckReady);
+                PlayRocketEffect(rockets[4], Vector2.right, CheckReady);
+                PlayRocketEffect(rockets[5], Vector2.right, CheckReady);
+            });
+    }
+
+    public void PlayBigBombCombo(GameObject pieceA, GameObject pieceB, Vector3 mergePos, Action OnMerged)
+    {
+        Sequence.Create()
+            .Group(Tween.Position(pieceA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(pieceB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(pieceA);
+                DestroyPiece(pieceB);
+
+                GameObject newBomb = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.Bomb);
+
+                Vector3 normalScale = newBomb.transform.localScale;
+                Vector3 squashScale = new Vector3(normalScale.x * 1.3f, normalScale.y * 0.7f);
+                Vector3 swellScale = new Vector3(normalScale.x * 1.4f, normalScale.y * 1.4f);
+
+                Sequence.Create(cycles: 3)
+                    .Group(Tween.Scale(newBomb.transform, squashScale, 0.16f, Ease.OutQuad))
+                    .Chain(Tween.Scale(newBomb.transform, swellScale, 0.12f, Ease.InQuad))
+                    .Chain(Tween.Scale(newBomb.transform, normalScale, 0.1f, Ease.InQuad))
+                    .OnComplete(() =>
+                    {
+                        ObjectPoolManager.SpawnObject(bombVFX, newBomb.transform.position, Quaternion.identity, PoolType.VFX);
+                        HapticManager.Instance.VibrateMedium();
+                        AudioManager.Instance.PlaySFX(AudioManager.Instance.bombPowerupSound);
+
+                        DestroyPiece(newBomb);
+                        OnMerged?.Invoke();            
+                    });
+            });
+    }
+
+    public void PlayUniversalDiscoCombo(GameObject discoBall, GameObject payload, int payloadCoreID, List<GridNode> primaryTargets, List<GridNode> secondaryTargets, Action OnPowerupCreated = null)
+    {
+        Vector3 centerPosition = discoBall.transform.position;
+
+        Sequence.Create()
+            .Group(Tween.Position(payload.transform, centerPosition, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(payload);
+
+                List<GameObject> spawnedPayloads = new List<GameObject>();
+                List<Vector2> rocketDirections = new List<Vector2>();
+
+                float timeBetweenLasers = 0.05f;
+                float laserFlightDuration = 0.2f;
+                int delayIndex = 0;
+
+                foreach (GridNode target in primaryTargets)
+                {
+                    LineRenderer laser = ObjectPoolManager.SpawnObject(discoVFX, centerPosition, Quaternion.identity, PoolType.VFX);
+                    laser.SetPosition(0, centerPosition);
+                    laser.SetPosition(1, centerPosition);
+
+                    Vector3 targetPos = new Vector3(target.xPosition, target.yPosition);
+                    float currentDelay = delayIndex * timeBetweenLasers;
+                    Tween.Delay(currentDelay, () =>
+                    {
+                        AudioManager.Instance.PlaySFX(AudioManager.Instance.discoballPowerupLaserSound);
+                    });
+
+                    Tween.Custom(0f, 1f, duration: laserFlightDuration, startDelay: currentDelay, onValueChange: t =>
+                    {
+                        laser.SetPosition(1, Vector3.Lerp(centerPosition, targetPos, t));
+                    })
+                    .OnComplete(() =>
+                    {
+                        int spawnID = payloadCoreID;
+
+                        // Rocket specific settings
+                        bool isVertical = UnityEngine.Random.value > 0.5f;
+                        if (payloadCoreID == PowerupIDs.RocketVertical || payloadCoreID == PowerupIDs.RocketHorizontal) spawnID = isVertical ? PowerupIDs.RocketVertical : PowerupIDs.RocketHorizontal;
+
+                        GameObject newPayload = SpawnPiece(target.xPosition, target.yPosition, spawnID);
+
+                        if (target.data != null && target.data.visualPiece != null) target.data.visualPiece.SetActive(false);
+
+                        spawnedPayloads.Add(newPayload);
+                        rocketDirections.Add(isVertical ? Vector2.up : Vector2.right);
+
+                        ObjectPoolManager.ReturnObjectToPool(laser.gameObject, PoolType.VFX);
+                    });
+
+                    delayIndex++;
+                }
+
+                float totalLaserTime = (primaryTargets.Count * timeBetweenLasers);
+
+                Sequence.Create()
+                    .ChainDelay(totalLaserTime + 0.2f)
+                    .OnComplete(() =>
+                    {
+                        DestroyPiece(discoBall);
+
+                        int readyCount = 0;
+                        Action CheckReady = () =>
+                        {
+                            readyCount++;
+                            if (readyCount == spawnedPayloads.Count) OnPowerupCreated?.Invoke();
+                        };
+
+                        for (int i = 0; i < spawnedPayloads.Count; i++)
+                        {
+                            if (payloadCoreID == PowerupIDs.RocketVertical || payloadCoreID == PowerupIDs.RocketHorizontal) 
+                            {
+                                PlayRocketEffect(spawnedPayloads[i], rocketDirections[i], CheckReady);
+                            }
+                            else if (payloadCoreID == PowerupIDs.Bomb) 
+                            {
+                                PlayBombEffect(spawnedPayloads[i], CheckReady);
+                            }
+                            else if (payloadCoreID == PowerupIDs.Propeller) 
+                            {
+                                Vector3 target;
+                                if (secondaryTargets != null && i < secondaryTargets.Count && secondaryTargets[i] != null)
+                                {
+                                    target = new Vector3(secondaryTargets[i].xPosition, secondaryTargets[i].yPosition);
+                                }
+                                else
+                                {
+                                    target = spawnedPayloads[i].transform.position + Vector3.up;
+                                }
+
+                                PlayPropellerEffect(spawnedPayloads[i], target, CheckReady);
+                            }
+                        }
+                    });
+            });
+    }
+
+    public void PlayDiscoComboExplosion(GameObject pieceA, GameObject pieceB, Vector3 mergePos, Action OnMergeEnd = null)
+    {
+        Sequence.Create()
+            .Group(Tween.Position(pieceA.transform, mergePos, 0.2f, Ease.InBack))
+            .Group(Tween.Position(pieceB.transform, mergePos, 0.2f, Ease.InBack))
+            .OnComplete(() =>
+            {
+                DestroyPiece(pieceA);
+                DestroyPiece(pieceB);
+
+                GameObject newDisco = SpawnPiece((int)mergePos.x, (int)mergePos.y, PowerupIDs.DiscoBall); 
+
+                Vector3 normalScale = newDisco.transform.localScale;
+                Vector3 squashScale = new Vector3(normalScale.x * 1.3f, normalScale.y * 0.7f);
+                Vector3 swellScale = new Vector3(normalScale.x * 1.4f, normalScale.y * 1.4f);
+
+                Sequence.Create(cycles: 3)
+                    .Group(Tween.Scale(newDisco.transform, squashScale, 0.16f, Ease.OutQuad))
+                    .Chain(Tween.Scale(newDisco.transform, swellScale, 0.12f, Ease.InQuad))
+                    .Chain(Tween.Scale(newDisco.transform, normalScale, 0.1f, Ease.InQuad))
+                    .OnComplete(() =>
+                    {
+                        ObjectPoolManager.SpawnObject(bombVFX, newDisco.transform.position, Quaternion.identity, PoolType.VFX);
+                        HapticManager.Instance.VibrateMedium();
+                        AudioManager.Instance.PlaySFX(AudioManager.Instance.bombPowerupSound);
+
+                        DestroyPiece(newDisco);
+                        OnMergeEnd?.Invoke();            
+                    });
+            });
     }
 
     private Vector3 GetBezierPoint(float t, Vector3 p0, Vector3 p1, Vector3 p2)
@@ -562,7 +907,7 @@ public class VisualManager : MonoBehaviour
                 return Color.orange;
 
             case 2:
-                return Color.lightBlue;
+                return Color.cyan;
             
             case 3:
                 return Color.green;

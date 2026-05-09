@@ -74,6 +74,7 @@ Assets/
    VisualManager.cs
   Match.cs
   ScriptableObjects/LevelDataSO.cs
+  UI/TopPanel.cs
   Utils.cs
   VFXAutoPool.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs

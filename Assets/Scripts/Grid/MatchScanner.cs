@@ -1,48 +1,54 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class MatchScanner 
 {
-    public Match GetMatchAt(BoardState board, int x, int y)
+    private static readonly Vector2Int[] Local2x2OriginOffsets = new Vector2Int[]
     {
-        if (!board.IsInPlayableBounds(x, y)) return null;
+        new Vector2Int(0, 0), // bottom left
+        new Vector2Int(-1, 0), // bottom right
+        new Vector2Int(0, -1), // top left,
+        new Vector2Int(-1, -1) // top right
+    };
+
+    private bool TryGetScannableCenter(BoardState board, int x, int y, out Vector2Int center, out int coreID)
+    {
+        center = default;
+        coreID = -1;
+
+        if (!board.IsInPlayableBounds(x, y)) return false;
 
         GridNode node = board.GetNodeAt(x, y);
-        PieceData nodeData = board.GetNodeDataAt(x, y);
-        if (node == null) return null;
-        if (node.state == NodeState.Falling || node.state == NodeState.Matching) return null;
-        if (nodeData == null) return null;
+        if (node == null || node.data == null) return false;
+        if (node.state == NodeState.Falling || node.state == NodeState.Matching) return false;
 
-        Vector2Int start = new Vector2Int(x, y);
-        int coreID = nodeData.coreID;
+        coreID = node.data.coreID;
+        if (coreID >= 100) return false;
 
-        // If its id is 100 or greater it is a powerup or collectible.
-        if (coreID >= 100) return null;
+        center = new Vector2Int(x, y);
+        return true;
+    }
 
-        List<Vector2Int> horizontalMatchPositions = ScanHorizontal(board, start, coreID);
-        List<Vector2Int> verticalMatchPositions = ScanVertical(board, start, coreID);
-        List<Vector2Int> propellerMatchPositions = ScanLocal2x2Match(board, start, coreID);
+    public Match GetMatchAt(BoardState board, int x, int y)
+    {
+        if (!TryGetScannableCenter(board, x, y, out Vector2Int center, out int coreID))
+        return null;
 
-        Match match = GetMatch(board, horizontalMatchPositions, verticalMatchPositions, propellerMatchPositions, start);
+        List<Vector2Int> horizontal = ScanHorizontal(board, center, coreID);
+        List<Vector2Int> vertical = ScanVertical(board, center, coreID);
+        List<Vector2Int> propeller = ScanLocal2x2Match(board, center, coreID);
 
+        Match match = GetMatch(board, horizontal, vertical, propeller, center);
         return match;
     }
     
     public bool HasMatchAt(BoardState board, int x, int y)
     {
-        if (!board.IsInPlayableBounds(x, y)) return false;
+        if (!TryGetScannableCenter(board, x, y, out Vector2Int center, out int coreID))
+            return false;
 
-        GridNode node = board.GetNodeAt(x, y);
-        if (node == null) return false;
-        if (node.data == null) return false;
-        if (node.state == NodeState.Falling) return false;
-
-        int coreID = node.data.coreID;
-        if (coreID >= 100) return false;
-
-        Vector2Int center = new Vector2Int(x, y);
-
-        return ScanHorizontal(board, center, coreID).Count >= 3 || ScanVertical(board, center, coreID).Count >= 3 || ScanLocal2x2Match(board, center, coreID).Count == 4;
+        return CountHorizontal(board, center, coreID) >= 3 || CountVertical(board, center, coreID) >= 3 || HasLocal2x2Match(board, center, coreID);
     }
     
     public bool HasMatchAt(BoardState board, Vector2Int gridPos)
@@ -59,8 +65,7 @@ public class MatchScanner
         for (int y = center.y + 1; y < board.Height; y++)
         {
             GridNode next = board.GetNodeAt(center.x, y);
-            if (!next.isPlayable || !board.IsInPlayableBounds(center.x, y)) break;
-
+            if (next == null || !next.isPlayable ) break;
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(center.x, y));
@@ -70,8 +75,7 @@ public class MatchScanner
         for (int y = center.y - 1; y >= 0; y--)
         {
             GridNode next = board.GetNodeAt(center.x, y);
-            if (!next.isPlayable || !board.IsInPlayableBounds(center.x, y)) break;
-
+            if (next == null || !next.isPlayable) break;
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(center.x, y));
@@ -87,6 +91,33 @@ public class MatchScanner
         return new List<Vector2Int>();
     }
 
+    private int CountVertical(BoardState board, Vector2Int center, int id)
+    {
+        int count = 1;
+
+        // Walk up
+        for (int y = center.y + 1; y < board.Height; y++)
+        {
+            GridNode next = board.GetNodeAt(center.x, y);
+            if (next == null || !next.isPlayable) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
+
+            count++;
+        }
+
+        // Walk down
+        for (int y = center.y - 1; y >= 0; y--)
+        {
+            GridNode next = board.GetNodeAt(center.x, y);
+            if (next == null || !next.isPlayable) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
+
+            count++;
+        }
+
+        return count;
+    }
+
     private List<Vector2Int> ScanHorizontal(BoardState board, Vector2Int center, int id)
     {
         List<Vector2Int> positions = new List<Vector2Int>();
@@ -96,8 +127,7 @@ public class MatchScanner
         for (int x = center.x + 1; x < board.Width; x++)
         {
             GridNode next = board.GetNodeAt(x, center.y);
-            if (!next.isPlayable || !board.IsInPlayableBounds(x, center.y)) break;
-
+            if (next == null || !next.isPlayable) break;
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(x, center.y));
@@ -107,8 +137,7 @@ public class MatchScanner
         for (int x = center.x - 1; x >= 0; x--)
         {
             GridNode next = board.GetNodeAt(x, center.y);
-            if (!next.isPlayable || !board.IsInPlayableBounds(x, center.y)) break;
-
+            if (next == null || !next.isPlayable) break;
             if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
 
             positions.Add(new Vector2Int(x, center.y));
@@ -124,21 +153,41 @@ public class MatchScanner
         return new List<Vector2Int>();
     }
 
+    // 
+    private int CountHorizontal(BoardState board, Vector2Int center, int id)
+    {
+        int count = 1;
+
+        // Walk right
+        for (int x = center.x + 1; x < board.Width; x++)
+        {
+            GridNode next = board.GetNodeAt(x, center.y);
+            if (next == null || !next.isPlayable) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
+
+            count++;
+        }
+
+        // Walk left
+        for (int x = center.x - 1; x >= 0; x--)
+        {
+            GridNode next = board.GetNodeAt(x, center.y);
+            if (next == null || !next.isPlayable) break;
+            if (next.state != NodeState.Idle || next.data == null || next.data.coreID != id) break;
+
+            count++;
+        }
+
+        return count;
+    }
+
+
     private List<Vector2Int> ScanLocal2x2Match(BoardState board, Vector2Int center, int id)
     {
-        // center position can be top left, top right, bottom left, bottom right.
-        Vector2Int[] potentialOrigins = new Vector2Int[]
+        foreach(Vector2Int offset in Local2x2OriginOffsets)
         {
-            new Vector2Int(center.x, center.y), // bottom left
-            new Vector2Int(center.x - 1, center.y), // bottom right
-            new Vector2Int(center.x, center.y - 1), // top left,
-            new Vector2Int(center.x - 1, center.y -1) // top right
-        };
-
-        foreach(Vector2Int origin in potentialOrigins)
-        {
-            int xPos = origin.x;
-            int yPos = origin.y;
+            int xPos = center.x + offset.x;
+            int yPos = center.y + offset.y;
 
             // Grab the nodes of a 2x2 box.
             GridNode bottomLeft = board.GetNodeAt(xPos, yPos);
@@ -183,9 +232,50 @@ public class MatchScanner
         return new List<Vector2Int>();
     }
 
+    private bool HasLocal2x2Match(BoardState board, Vector2Int center, int id)
+    {
+        foreach(Vector2Int offset in Local2x2OriginOffsets)
+        {
+            int xPos = center.x + offset.x;
+            int yPos = center.y + offset.y;
+
+            // Grab the nodes of a 2x2 box.
+            GridNode bottomLeft = board.GetNodeAt(xPos, yPos);
+            GridNode bottomRight = board.GetNodeAt(xPos + 1, yPos);
+            GridNode topLeft = board.GetNodeAt(xPos, yPos + 1);
+            GridNode topRight = board.GetNodeAt(xPos + 1, yPos + 1);
+
+            if (bottomLeft == null || bottomRight == null || topLeft == null || topRight == null)
+                continue;
+            
+            if (!board.IsInPlayableBounds(xPos, yPos) || !board.IsInPlayableBounds(xPos + 1, yPos) ||
+                !board.IsInPlayableBounds(xPos, yPos + 1) || !board.IsInPlayableBounds(xPos + 1, yPos + 1))
+            {
+                continue;
+            }
+
+
+            if (!bottomLeft.isPlayable || !bottomRight.isPlayable || !topLeft.isPlayable || !topRight.isPlayable)
+                continue;
+
+            if (bottomLeft.data == null || bottomRight.data == null || topLeft.data == null || topRight.data == null)
+                continue;
+            
+            if (bottomLeft.state != NodeState.Idle || bottomRight.state != NodeState.Idle || topLeft.state != NodeState.Idle || topRight.state != NodeState.Idle)
+                continue;
+            
+            if (bottomLeft.data.coreID != id || bottomRight.data.coreID != id || topLeft.data.coreID != id || topRight.data.coreID != id)
+                continue;
+
+            return true;
+        }
+
+        return false;
+    }
+
     private Match GetMatch(BoardState board, List<Vector2Int> horizontal, List<Vector2Int> vertical, List<Vector2Int> propeller, Vector2Int startPos)
     {
-        List<GridNode> matchedNodes = new List<GridNode>();
+        HashSet<GridNode> matchedNodes = new HashSet<GridNode>();
         GridNode center = board.GetNodeAt(startPos);
         int coreID = center.data.coreID;
 
@@ -199,20 +289,16 @@ public class MatchScanner
             foreach(Vector2Int gridPos in horizontal)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
             foreach(Vector2Int gridPos in vertical)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
-            return new Match(matchedNodes, center, MatchShape.Match5Disco, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match5Disco, coreID);
         }
         else if (horizontal.Count >= 3 && vertical.Count >= 3)
         {
@@ -220,20 +306,16 @@ public class MatchScanner
             foreach (Vector2Int gridPos in horizontal)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-                
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
             foreach (Vector2Int gridPos in vertical)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-                
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
-            return new Match(matchedNodes, center, MatchShape.Match5Bomb, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match5Bomb, coreID);
         }
         else if (horizontal.Count == 4)
         {
@@ -241,12 +323,10 @@ public class MatchScanner
             foreach (Vector2Int gridPos in horizontal)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-                
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
-            return new Match(matchedNodes, center, MatchShape.Match4Horizontal, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match4Horizontal, coreID);
         }
         else if (vertical.Count == 4)
         {
@@ -254,12 +334,10 @@ public class MatchScanner
             foreach (Vector2Int gridPos in vertical)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-                
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
-            return new Match(matchedNodes, center, MatchShape.Match4Vertical, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match4Vertical, coreID);
         }
         else if (propeller.Count == 4)
         {
@@ -267,12 +345,10 @@ public class MatchScanner
             foreach (Vector2Int gridPos in propeller)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-                
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);
+                matchedNodes.Add(node);
             }
 
-            return new Match(matchedNodes, center, MatchShape.Match4Propeller, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match4Propeller, coreID);
         }
         else if (horizontal.Count == 3)
         {
@@ -280,12 +356,10 @@ public class MatchScanner
             foreach(Vector2Int gridPos in horizontal)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);   
+                matchedNodes.Add(node);   
             }
                 
-            return new Match(matchedNodes, center, MatchShape.Match3, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match3, coreID);
         }
         else if (vertical.Count == 3)
         {
@@ -293,12 +367,10 @@ public class MatchScanner
             foreach(Vector2Int gridPos in vertical)
             {
                 GridNode node = board.GetNodeAt(gridPos);
-
-                if (!matchedNodes.Contains(node))
-                    matchedNodes.Add(node);    
+                matchedNodes.Add(node);    
             }
             
-            return new Match(matchedNodes, center, MatchShape.Match3, coreID);
+            return new Match(matchedNodes.ToList(), center, MatchShape.Match3, coreID);
         }
 
         // SHOULD NOT RETURN

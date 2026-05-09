@@ -15,10 +15,10 @@ MonoBehaviour:
   width: 7
   height: 7
   bufferSize: 2
-  movesAllowed: 30
+  movesAllowed: 20
   levelGoals:
-  - itemID: 1000
-    targetCount: 7
+  - itemID: 2000
+    targetCount: 4
   gridLayout:
   - isPlayable: 1
     preSpawnItemID: 0
@@ -42,6 +42,39 @@ MonoBehaviour:
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
+    preSpawnItemID: 2000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 2000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 2000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 2000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 10000
+    type: 3
+  - isPlayable: 1
+    preSpawnItemID: 10000
+    type: 3
+  - isPlayable: 1
+    preSpawnItemID: 10000
+    type: 3
+  - isPlayable: 1
+    preSpawnItemID: 10000
+    type: 3
+  - isPlayable: 1
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
@@ -77,39 +110,6 @@ MonoBehaviour:
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
-  - isPlayable: 1
-    preSpawnItemID: 400
-    type: 2
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 400
-    type: 2
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0
