@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using PrimeTween;
 using System;
+using UnityEngine.Tilemaps;
 
 public class VisualManager : MonoBehaviour
 {
@@ -30,6 +31,14 @@ public class VisualManager : MonoBehaviour
     [SerializeField] private Transform rocketVFX;
     [SerializeField] private LineRenderer discoVFX;
 
+    [Header("Tilemap Settings")]
+    [SerializeField] private Tilemap tilemapToPaint;
+    [SerializeField] private TileBase gridTile;
+
+    [Header("Board Masking")]
+    [SerializeField] private Transform maskParent;
+    [SerializeField] private GameObject maskPrefab;
+
     private readonly Dictionary<Transform, Vector3> hintedOriginalScales = new Dictionary<Transform, Vector3>();
     private readonly Dictionary<Transform, Sequence> hintedSequences = new Dictionary<Transform, Sequence>();
 
@@ -47,7 +56,7 @@ public class VisualManager : MonoBehaviour
         PrimeTweenConfig.warnEndValueEqualsCurrent = false;
     }
 
-    public GameObject  SpawnPiece(int x, int y, int coreID)
+    public GameObject SpawnPiece(int x, int y, int coreID)
     {
         Vector3 spawnPos = new Vector3(x, y);
         GameObject obj = GetObjectToSpawn(coreID);
@@ -59,6 +68,17 @@ public class VisualManager : MonoBehaviour
         }
 
         return ObjectPoolManager.SpawnObject(obj, spawnPos, Quaternion.identity);
+    }
+
+    public void SpawnBoardMask(int x, int y)
+    {
+        GameObject newMask = Instantiate(maskPrefab, maskParent);
+        newMask.transform.position = new Vector3(x, y);
+    }
+
+    public void PaintGridTile(int x, int y)
+    {
+        tilemapToPaint.SetTile(new Vector3Int(x, y), gridTile);
     }
 
     public Sprite GetSpriteForCoreID(int coreID)
@@ -477,7 +497,9 @@ public class VisualManager : MonoBehaviour
         }))
         .OnComplete(() =>
         {
-            vfxSource.Stop();
+            if (vfxSource != null)
+                vfxSource.Stop();
+            
             renderer.sortingOrder = 0;
             DestroyPiece(piece);
             OnCompleteCallback?.Invoke();

@@ -294,6 +294,11 @@ public class PowerupProcessor
                 GridNode dest = GetPropellerDestination(board);
                 if (dest != null)
                 {
+                    while(primaryVisualTargets.Contains(dest))
+                    {
+                        dest = GetPropellerDestination(board);
+                    }
+                    
                     primaryVisualTargets.Add(dest);
                     targets.Add(dest);
                 }

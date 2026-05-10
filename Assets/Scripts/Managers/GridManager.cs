@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,9 @@ public class GridManager : MonoBehaviour
     private const float HintingCheckInterval = 6f; // change to serialize field
 
     private HintData bestMoveToHint;
+    private bool wasBoardSettled;
+
+    public event Action OnBoardSettled;
 
     private void Awake()
     {
@@ -60,6 +64,7 @@ public class GridManager : MonoBehaviour
         
         StartCoroutine(DeadlockCoroutine());
         ResetHintTimer(false);
+        wasBoardSettled = deadlockAndHintManager.IsBoardSettled(board);
     }
 
     private void InitializeGrid()
@@ -75,6 +80,12 @@ public class GridManager : MonoBehaviour
                 // Only spawn visuals for playable nodes that have data
                 if (node != null && node.isPlayable && node.data != null)
                 {
+                    if (board.IsInPlayableBounds(x, y))
+                    {
+                        VisualManager.Instance.SpawnBoardMask(x, y);
+                        VisualManager.Instance.PaintGridTile(x, y);
+                    }
+                    
                     node.data.visualPiece = VisualManager.Instance.SpawnPiece(x, y, node.data.coreID);
                 }
             }
@@ -137,7 +148,7 @@ public class GridManager : MonoBehaviour
         {
             VisualManager.Instance.PlayRocketEffect(visualPiece, Vector2.up, () =>
             {
-                ResolvePowerupTargetsForRocket(centerNode, true, targetsToDestroy);
+                ResolvePowerupTargetsForRocket(centerNode, targetsToDestroy);
             });
         }
         // Horizontal Rocket
@@ -145,7 +156,7 @@ public class GridManager : MonoBehaviour
         {
             VisualManager.Instance.PlayRocketEffect(visualPiece, Vector2.right, () =>
             {
-                ResolvePowerupTargetsForRocket(centerNode, false, targetsToDestroy);
+                ResolvePowerupTargetsForRocket(centerNode, targetsToDestroy);
             });
         }
         // Bomb
@@ -195,7 +206,7 @@ public class GridManager : MonoBehaviour
             }
             else
             {
-                ResolvePowerupTargets(targetsToDestroy); // Failsafe, later change this to target change.
+                ResolvePowerupTargets(targetsToDestroy); // change this to target change.
             }
         }
     }
@@ -229,19 +240,26 @@ public class GridManager : MonoBehaviour
         {
             VisualManager.Instance.PlayCrossRocketCombo(visualA, visualB, centerPosition, () =>
             {
-                ResolvePowerupTargets(comboData.targets);
+                ResolvePowerupTargetsForRocket(centerNode, comboData.targets);
             });
             return;
         }
         // Rocket + propeller
         else if (aIsRocket && bIsPropeller || aIsPropeller && bIsRocket)
         {
-            Vector3 targetPos = new Vector3(comboData.secondary[0].xPosition, comboData.secondary[0].yPosition);
+            if (comboData.secondary == null || comboData.secondary.Count == 0 || comboData.secondary[0] == null)
+            {
+                ResolvePowerupTargets(comboData.targets);
+                return;
+            }
+
+            GridNode destination = comboData.secondary[0];
+            Vector3 targetPos = new Vector3(destination.xPosition, destination.yPosition);
             int deliverID = coreIDA == PowerupIDs.Propeller ? coreIDB : coreIDA;
 
             VisualManager.Instance.PlayPropellerDeliveryCombo(visualA, visualB, centerPosition, targetPos, deliverID, () =>
             {
-                ResolvePowerupTargets(comboData.targets);
+                ResolvePowerupTargetsForRocket(centerNode, comboData.targets);
             });
         }
         // Rocket + Bomb
@@ -249,7 +267,7 @@ public class GridManager : MonoBehaviour
         {
             VisualManager.Instance.PlayGiantRocketCombo(visualA, visualB, centerPosition, () =>
             {
-                ResolvePowerupTargets(comboData.targets); 
+                ResolvePowerupTargetsForRocket(centerNode, comboData.targets); 
             });
         }
         // Rocket + Disco Ball
@@ -261,7 +279,7 @@ public class GridManager : MonoBehaviour
 
             VisualManager.Instance.PlayUniversalDiscoCombo(actualDisco, actualPayload, payloadCoreID, comboData.primary, comboData.secondary, () =>
             {
-                ResolvePowerupTargets(comboData.targets);
+                ResolvePowerupTargetsForRocket(centerNode, comboData.targets);
             });
         }
         // Propeller + propeller
@@ -361,12 +379,11 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    private void ResolvePowerupTargetsForRocket(GridNode centerNode, bool isVertical, HashSet<GridNode> targetsToDestroy)
+    private void ResolvePowerupTargetsForRocket(GridNode centerNode, HashSet<GridNode> targetsToDestroy)
     {
          _powerupChainDepth++;
 
-        float timePerTile = 0.05f; 
-        float maxDelay = 0f;
+        float maxDelay = 0.4f;
 
         foreach (GridNode target in targetsToDestroy)
         {
@@ -376,10 +393,10 @@ public class GridManager : MonoBehaviour
             // was already cleared (for example, the rocket center node).
             _pendingGravityColumns.Add(target.xPosition);
 
-            int distance = isVertical ? Mathf.Abs(target.yPosition - centerNode.yPosition) : Mathf.Abs(target.xPosition - centerNode.xPosition);
+            int distance = Mathf.Abs(target.xPosition - centerNode.xPosition) + Mathf.Abs(target.yPosition - centerNode.yPosition);
 
-            float delay = distance * timePerTile + timePerTile;
-            if (delay > maxDelay) maxDelay = delay;
+            float delay = distance * 0.07f + 0.07f;
+            if (delay > maxDelay) delay = maxDelay;
 
             Tween.Delay(delay, () =>
             {
@@ -811,13 +828,28 @@ public class GridManager : MonoBehaviour
         {
             yield return new WaitForSeconds(DeadlockCheckInterval);
 
-            if (isReshuffling || !deadlockAndHintManager.IsBoardSettled(board)) continue;
+            bool isSettledNow = !isReshuffling && _powerupChainDepth == 0 && _pendingGravityColumns.Count == 0 && deadlockAndHintManager.IsBoardSettled(board);
+
+            if (isSettledNow && !wasBoardSettled)
+            {
+                StartCoroutine(EndGameCoroutine());
+            }
+
+            wasBoardSettled = isSettledNow;
+
+            if (!isSettledNow) continue;
 
             if (!deadlockAndHintManager.HasAnyPossibleMove(board))
             {
                 TriggerBoardReshuffle();
             }
         }
+    }
+
+    private IEnumerator EndGameCoroutine()
+    {
+        yield return new WaitForSeconds(.5f);
+        OnBoardSettled?.Invoke();
     }
 
     private void TriggerHint(HintData hintData)

@@ -18,6 +18,8 @@ public class LevelManager : MonoBehaviour
     public event Action<int> OnMovesChanged;
     public event Action<int, int> OnGoalChanged;
     public event Action<int, IReadOnlyList<LevelObjective>> OnLevelInitialized;
+    public event Action OnGameWin;
+    public event Action OnGameLose;
 
     public LevelDataSO CurrentLevelData => currentlevelData;
     public int CurrentMoves => movesAllowed;
@@ -26,6 +28,8 @@ public class LevelManager : MonoBehaviour
     private LevelDataSO currentlevelData;
     private int movesAllowed;
     private List<LevelObjective> levelGoals;
+
+    public static int TargetLevelId = 0;
     
     private void Awake()
     {
@@ -37,11 +41,32 @@ public class LevelManager : MonoBehaviour
 
         Instance = this;
 
-        LoadLevel(0);
+        LoadLevel(TargetLevelId);
+    }
+
+    private void Start()
+    {
+        if (GridManager.Instance != null)
+        {
+            GridManager.Instance.OnBoardSettled += CheckForWinSituation;
+            GridManager.Instance.OnBoardSettled += CheckForLoseSituation;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (GridManager.Instance != null)
+        {
+            GridManager.Instance.OnBoardSettled -= CheckForWinSituation;
+            GridManager.Instance.OnBoardSettled -= CheckForLoseSituation;
+        }
     }
 
     public void LoadLevel(int levelID)
     {
+        if (levels.Length == 0) return;
+        if (levelID < 0 || levelID >= levels.Length) levelID = 0;
+
         // Instantiating the level data so changes made during the gameplay does not effect the data in the serialized object.
         currentlevelData = Instantiate(levels[levelID]);
 
@@ -96,5 +121,33 @@ public class LevelManager : MonoBehaviour
         }
 
         return clonedGoals;
+    }
+
+    private void CheckForWinSituation()
+    {
+        int finishedGoals = 0;
+
+        foreach(LevelObjective goal in levelGoals)
+        {
+            if (goal.targetCount == 0)
+            {
+                finishedGoals++;
+            }
+        }
+
+        if (finishedGoals == levelGoals.Count)
+        {
+            Debug.Log("Game Win");
+            OnGameWin?.Invoke();
+        }
+    }
+
+    private void CheckForLoseSituation()
+    {
+        if (movesAllowed == 0)
+        {
+            Debug.Log("Game Lose");
+            OnGameLose?.Invoke();
+        }
     }
 }

@@ -4,6 +4,8 @@ using UnityEngine;
 public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance;
+
+    public bool muteAudio = false;
     
     [Header("Audio Sources")]
     [SerializeField] private AudioSource musicSource;
@@ -53,7 +55,7 @@ public class AudioManager : MonoBehaviour
     
     public AudioSource PlaySFX(AudioClip clip, bool randomizePitch = true)
     {
-        if (clip == null) return null;
+        if (clip == null || muteAudio) return null;
 
         AudioSource availableSource = null;
 
@@ -82,10 +84,15 @@ public class AudioManager : MonoBehaviour
 
     private void PlayMusic(AudioClip clip)
     {
-        if (clip == null) return;
+        if (clip == null || muteAudio) return;
 
         musicSource.clip = clip;
         musicSource.loop = true;
         musicSource.Play();
+    }
+
+    public void MuteAudio(bool status)
+    {
+        muteAudio = status;
     }
 }

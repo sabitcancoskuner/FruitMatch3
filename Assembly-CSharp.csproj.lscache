@@ -66,15 +66,19 @@ Assets/
   Level Generation/CellSetup.cs
   Managers/
    AudioManager.cs
+   GameManager.cs
    GridManager.cs
    HapticManager.cs
    InputManager.cs
    LevelManager.cs
+   MainMenuManager.cs
    ObjectPoolManager.cs
    VisualManager.cs
   Match.cs
   ScriptableObjects/LevelDataSO.cs
-  UI/TopPanel.cs
+  UI/
+   InGameUI.cs
+   TopPanel.cs
   Utils.cs
   VFXAutoPool.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
