@@ -137,7 +137,6 @@ public class LevelManager : MonoBehaviour
 
         if (finishedGoals == levelGoals.Count)
         {
-            Debug.Log("Game Win");
             OnGameWin?.Invoke();
         }
     }
@@ -146,7 +145,6 @@ public class LevelManager : MonoBehaviour
     {
         if (movesAllowed == 0)
         {
-            Debug.Log("Game Lose");
             OnGameLose?.Invoke();
         }
     }

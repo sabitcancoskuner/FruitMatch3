@@ -392,6 +392,12 @@ public class VisualManager : MonoBehaviour
         Vector3 secondHalfStretchScale = new Vector3(secondHalfScale.x * 0.7f, secondHalfScale.y * 1.4f);
         Transform trail2 = ObjectPoolManager.SpawnObject(rocketVFX, half2.transform.position, Quaternion.identity, PoolType.VFX);
 
+        if (direction == Vector2.up)
+        {
+            trail1.rotation = Quaternion.LookRotation(new Vector3(0, 0, 90));
+            trail2.rotation = Quaternion.LookRotation(new Vector3(0, 0, 90));
+        }
+
         Sequence rocketSeq = Sequence.Create();
 
         if (direction == Vector2.up)

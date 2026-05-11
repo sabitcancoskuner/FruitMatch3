@@ -3648,8 +3648,8 @@ MonoBehaviour:
   goldenKeyObstacle: {fileID: 7305355323440859983, guid: be60fb430bd006142a19e42f453d66ae, type: 3}
   popVFX: {fileID: 2262590543723430693, guid: f6ce2625473042946bee98a37bc27ba5, type: 3}
   bombVFX: {fileID: 8020314164175444657, guid: 9f8c8de74014c60479984415b45c7b60, type: 3}
-  rocketVFX: {fileID: 6865769237134773718, guid: 0c3d9e74ce7ddbe4cbafc84f9cb5d8ad, type: 3}
-  discoVFX: {fileID: 5476597154173419517, guid: 4ba0380abaeebf84291bccb0565e2949, type: 3}
+  rocketVFX: {fileID: 8466633653183214044, guid: 6f714903183b0f64b8ad0699de1f27d0, type: 3}
+  discoVFX: {fileID: 761254795125387007, guid: 81f755cd9627c2b46a103eb96e1e7457, type: 3}
   tilemapToPaint: {fileID: 936597957}
   gridTile: {fileID: 11400000, guid: 6fc08c137abf0984bb9116c6ad255acf, type: 2}
   maskParent: {fileID: 1810990185}
