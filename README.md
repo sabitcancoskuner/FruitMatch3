@@ -33,3 +33,17 @@ Instead of manually typing array values, designers can visually "paint" playable
 <div align="center">
   <img src="GIFs/editor.gif" width="1000" alt="Custom Editor"/>
 </div>
+
+## 🗺️ Level Progression (The 10-Level Showcase)
+Rather than a drawn-out tutorial, this build features a highly curated 10-level vertical slice designed to showcase specific architectural and game design milestones:
+
+* **Level 1 (The Basics):** Introduces the core matching loop, hybrid gravity mechanics, and integrated haptics.
+* **Level 2 (Propeller AI):** Introduces obstacles (Golden Keys) and demonstrates pathfinding of the Propeller powerup.
+* **Level 3 (Chain Reactions):** Teaches combos (Rocket + Bomb) and highlights the seamless Tuple-based data routing between the logic and visual systems.
+* **Level 4 (Complex State Delivery):** Showcases the "Delivery Drone" combo, where a Propeller physically transports a Bomb across the board to a dynamic target.
+* **Level 5 (Dynamic Masking):** A donut-shaped board that proves the Composite Masking rendering system works flawlessly around unplayable center holes.
+* **Level 6 (The Swarm):** A Triple-Propeller combo level that stress-tests the engine's asynchronous, multi-target homing logic without dropping frames.
+* **Level 7 (Color Targeting):** Introduces the Disco Ball to show off delayed-laser rendering loops.
+* **Level 8 (The Chaos Engine):** The Disco + Payload combo. Instantiates 15+ rockets simultaneously to prove queue prevents game freezes during massive chain reactions.
+* **Level 9 (The Grand Finale):** Pre-placed dual Disco Balls. The ultimate, board-wiping particle physics showcase that annihilates the grid.
+* **Level 10 (The Sandbox):** A standard, highly-populated board designed to let the player experience the full, unrestrained game loop.
