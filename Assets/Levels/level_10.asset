@@ -18,25 +18,121 @@ MonoBehaviour:
   movesAllowed: 15
   levelGoals:
   - itemID: 1000
-    targetCount: 3
-  - itemID: 2000
-    targetCount: 1
+    targetCount: 5
   - itemID: 3000
     targetCount: 3
+  - itemID: 2000
+    targetCount: 2
   gridLayout:
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 0
+    type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 0
+    type: 0
   - isPlayable: 1
-    preSpawnItemID: 1000
-    type: 1
+    preSpawnItemID: 0
+    type: 0
   - isPlayable: 1
     preSpawnItemID: 2000
     type: 1
   - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 1000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 2000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 1000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 1000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 1000
+    type: 1
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
+    preSpawnItemID: 0
+    type: 0
+  - isPlayable: 1
     preSpawnItemID: 3000
     type: 1
   - isPlayable: 1
@@ -46,107 +142,11 @@ MonoBehaviour:
     preSpawnItemID: 3000
     type: 1
   - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
-    preSpawnItemID: 10000
-    type: 3
-  - isPlayable: 1
     preSpawnItemID: 0
     type: 0
   - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
-  - isPlayable: 1
-    preSpawnItemID: 0
-    type: 0
+    preSpawnItemID: 1000
+    type: 1
   - isPlayable: 1
     preSpawnItemID: 0
     type: 0

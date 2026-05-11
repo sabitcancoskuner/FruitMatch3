@@ -1,0 +1,294 @@
+fileFormatVersion: 2
+guid: c9b82790625b30d4aba18e98e272b4ff
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -6905922259874023411
+    second: uipack_rpg_sheet_0
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 64
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Android
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: uipack_rpg_sheet_52
+      rect:
+        serializedVersion: 2
+        x: 201
+        y: 124
+        width: 89
+        height: 92
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 3, y: 2, z: 0, w: 3}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: fcb2730b5740ff34bbc48d1a8be2bdb9
+      internalID: 1941891001
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: uipack_rpg_sheet_64
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 36
+        width: 100
+        height: 100
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 7, y: 6, z: 8, w: 7}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cf5849a05a16bf744b16ea6e43bfdc4f
+      internalID: 441329753
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: uipack_rpg_sheet_78
+      rect:
+        serializedVersion: 2
+        x: 294
+        y: 22
+        width: 49
+        height: 49
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a0aefe0b6237cbe47a5c8964be5d7619
+      internalID: 537093180
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: cfd81c96e86a8ac4bb473d249a6c1008
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":49.0,"y":49.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      uipack_rpg_sheet_0: -6905922259874023411
+      uipack_rpg_sheet_1: 54109191
+      uipack_rpg_sheet_10: 938404635
+      uipack_rpg_sheet_11: 1185108846
+      uipack_rpg_sheet_12: 996269157
+      uipack_rpg_sheet_13: 742344841
+      uipack_rpg_sheet_14: 1936126788
+      uipack_rpg_sheet_15: 1604500786
+      uipack_rpg_sheet_16: 2011011731
+      uipack_rpg_sheet_17: 1668601906
+      uipack_rpg_sheet_18: -1936436434
+      uipack_rpg_sheet_19: 1464619053
+      uipack_rpg_sheet_2: -1912365630
+      uipack_rpg_sheet_20: 716502426
+      uipack_rpg_sheet_21: 253447341
+      uipack_rpg_sheet_22: -1558037628
+      uipack_rpg_sheet_23: -125460735
+      uipack_rpg_sheet_24: -154928274
+      uipack_rpg_sheet_25: 1523070421
+      uipack_rpg_sheet_26: -1480235926
+      uipack_rpg_sheet_27: -2134181543
+      uipack_rpg_sheet_28: 1117365913
+      uipack_rpg_sheet_29: -1753447056
+      uipack_rpg_sheet_3: -767880216
+      uipack_rpg_sheet_30: 1859046481
+      uipack_rpg_sheet_31: 186709352
+      uipack_rpg_sheet_32: 1863890903
+      uipack_rpg_sheet_33: 1526848682
+      uipack_rpg_sheet_34: 1108639773
+      uipack_rpg_sheet_35: 1202147461
+      uipack_rpg_sheet_36: 370548586
+      uipack_rpg_sheet_37: 1322483591
+      uipack_rpg_sheet_38: 1968476595
+      uipack_rpg_sheet_39: 2130454660
+      uipack_rpg_sheet_4: -1017457480
+      uipack_rpg_sheet_40: 672838949
+      uipack_rpg_sheet_41: -2068583191
+      uipack_rpg_sheet_42: 461310408
+      uipack_rpg_sheet_43: -1247738657
+      uipack_rpg_sheet_44: -877845397
+      uipack_rpg_sheet_45: 1547461198
+      uipack_rpg_sheet_46: 2105118907
+      uipack_rpg_sheet_47: 632161510
+      uipack_rpg_sheet_48: -756931312
+      uipack_rpg_sheet_49: 1568425604
+      uipack_rpg_sheet_5: -477933235
+      uipack_rpg_sheet_50: 193920312
+      uipack_rpg_sheet_51: 458837651
+      uipack_rpg_sheet_52: 1941891001
+      uipack_rpg_sheet_53: -1521446600
+      uipack_rpg_sheet_54: -201525866
+      uipack_rpg_sheet_55: 1671968376
+      uipack_rpg_sheet_56: -2032664712
+      uipack_rpg_sheet_57: 1596650211
+      uipack_rpg_sheet_58: 1950071964
+      uipack_rpg_sheet_59: 1051728753
+      uipack_rpg_sheet_6: 1104709275
+      uipack_rpg_sheet_60: -1923617978
+      uipack_rpg_sheet_61: -1959174430
+      uipack_rpg_sheet_62: 2020000668
+      uipack_rpg_sheet_63: -713173418
+      uipack_rpg_sheet_64: 441329753
+      uipack_rpg_sheet_65: 426292786
+      uipack_rpg_sheet_66: 374084239
+      uipack_rpg_sheet_67: 2011328714
+      uipack_rpg_sheet_68: 20264073
+      uipack_rpg_sheet_69: 675026971
+      uipack_rpg_sheet_7: 2078186168
+      uipack_rpg_sheet_70: -1877532249
+      uipack_rpg_sheet_71: -756918085
+      uipack_rpg_sheet_72: 1380863747
+      uipack_rpg_sheet_73: -424672233
+      uipack_rpg_sheet_74: 305639731
+      uipack_rpg_sheet_75: 1741286303
+      uipack_rpg_sheet_76: -1725392701
+      uipack_rpg_sheet_77: -2064914745
+      uipack_rpg_sheet_78: 537093180
+      uipack_rpg_sheet_79: 1683713859
+      uipack_rpg_sheet_8: 1755286294
+      uipack_rpg_sheet_9: -2035441521
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
